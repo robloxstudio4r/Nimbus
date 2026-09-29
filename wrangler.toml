@@ -15,7 +15,7 @@ run_worker_first = true
 [[d1_databases]]
 binding = "DB"
 database_name = "nimbus-db"
-database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+database_id = "5887518f-9433-4e85-a78b-e8620c5ece03"
 
 # ---------- environment ----------
 [vars]
