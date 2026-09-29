@@ -2,21 +2,43 @@ name = "nimbus-store"
 main = "src/index.js"
 compatibility_date = "2024-11-01"
 
-# ---------- static assets ----------
+# ---------------------------------------------------------------
+# Static assets
+# Serves everything inside ./public on the same domain as the Worker.
+# run_worker_first = true means the Worker runs first, then
+# hands non-/api/* requests to the assets binding (see src/index.js).
+# ---------------------------------------------------------------
 [assets]
 directory = "./public"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 run_worker_first = true
 
-# ---------- D1 database ----------
-# Replace database_id with the value printed by:
-#   npx wrangler d1 create nimbus-db
+# ---------------------------------------------------------------
+# D1 database binding
+#
+# BEFORE DEPLOYING, do ONE of these:
+#
+#   Option 1 (real backend):
+#     Run:  npx wrangler d1 create nimbus-db
+#     Copy the printed database_id into the field below.
+#
+#   Option 2 (skip the DB for now):
+#     Comment out the entire [[d1_databases]] block by putting a
+#     # in front of every line. The site will still work —
+#     the frontend auto-falls back to localStorage mode.
+# ---------------------------------------------------------------
 [[d1_databases]]
 binding = "DB"
 database_name = "nimbus-db"
 database_id = "5887518f-9433-4e85-a78b-e8620c5ece03"
 
-# ---------- environment ----------
+# ---------------------------------------------------------------
+# Environment variables
+# Used by src/index.js to validate the admin password.
+# For production, replace this with:
+#   npx wrangler secret put ADMIN_PASSWORD
+# and delete the line below.
+# ---------------------------------------------------------------
 [vars]
 ADMIN_PASSWORD = "06142014Aa@"
