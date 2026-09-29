@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nimbus — Shop</title>
+<meta name="description" content="Nimbus demo store" />
+<style>
+:root{
+  --bg:#0a0c11; --panel:#12151d; --panel-2:#171b26; --line:#242a3a;
+  --text:#e9edf6; --muted:#8a93ab; --accent:#6d8bff; --accent-2:#9b5cff;
+  --good:#2ecc71; --warn:#f5a524; --bad:#f0506e; --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:radial-gradient(1200px 600px at 80% -10%,#1b2140 0,transparent 60%),var(--bg);
+  color:var(--text); min-height:100vh;
+  font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.right{text-align:right}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:18px;
+  padding:14px 22px;background:rgba(10,12,17,.72);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{font-weight:800;letter-spacing:.14em;font-size:14px;cursor:pointer}
+.brand span{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.topbar nav{display:flex;gap:4px;margin-left:auto}
+.topbar nav a{padding:8px 14px;border-radius:9px;font-size:14px;color:var(--muted)}
+.topbar nav a:hover,.topbar nav a.on{background:var(--panel-2);color:var(--text)}
+.cartbtn{
+  display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
+  padding:8px 14px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px
+}
+.cartbtn:hover{border-color:#39425a}
+.badge{
+  min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(180deg,var(--accent),#4f6ef0);font-size:11px;font-weight:800
+}
+
+/* ---------- buttons ---------- */
+.btn{
+  background:linear-gradient(180deg,var(--accent),#4f6ef0);border:0;color:#fff;
+  padding:9px 16px;border-radius:10px;cursor:pointer;font-weight:650;font-size:14px;
+  transition:filter .15s ease,transform .06s ease;
+}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--panel-2)}
+.btn.danger{background:transparent;border:1px solid #4a2230;color:#ff8fa5}
+.btn.danger:hover{background:#2a1420}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:8px}
+
+/* ---------- layout ---------- */
+main{max-width:1180px;margin:0 auto;padding:26px 22px 90px}
+.hero{padding:34px 0 22px}
+.hero h1{margin:0 0 8px;font-size:clamp(28px,5vw,44px);letter-spacing:-.02em}
+.hero p{margin:0;color:var(--muted);max-width:560px}
+
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(238px,1fr))}
+.card{
+  background:linear-gradient(180deg,var(--panel),#0f1219);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.thumb{
+  aspect-ratio:4/3;background:linear-gradient(135deg,#1c2237,#2a2350);
+  display:grid;place-items:center;font-size:40px;font-weight:800;color:#5e6b93;overflow:hidden
+}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pbody{padding:14px 15px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.pbody h3{margin:0;font-size:15.5px}
+.pbody p{margin:0;font-size:13px;color:var(--muted);flex:1}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.price{font-weight:750;font-size:16px}
+
+/* ---------- drawer ---------- */
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(400px,92vw);z-index:60;
+  background:#0e111a;border-left:1px solid var(--line);
+  transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:none}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.drawer-head h2{margin:0;font-size:16px}
+.drawer-body{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.drawer-foot{padding:16px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.line{display:flex;gap:12px;align-items:center}
+.line .thumb{width:54px;height:54px;aspect-ratio:1;border-radius:9px;font-size:19px;flex:none}
+.line .info{flex:1;min-width:0}
+.line .info b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);cursor:pointer;line-height:1}
+.qty button:hover{border-color:#3a4460}
+.qty span{min-width:20px;text-align:center;font-size:13.5px}
+.iconbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:4px}
+.iconbtn:hover{color:var(--bad)}
+.sumrow{display:flex;justify-content:space-between;font-size:14px}
+.sumrow.total{font-size:16.5px;font-weight:750}
+
+/* ---------- overlay / modal ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:80;background:rgba(4,6,11,.72);backdrop-filter:blur(5px);
+  display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;
+}
+.modal{
+  width:min(500px,100%);background:var(--panel);border:1px solid var(--line);
+  border-radius:18px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.6);
+  animation:pop .18s ease;
+}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.modal h2{margin:0 0 4px;font-size:20px}
+.field{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.field label{font-size:12.5px;color:var(--muted);font-weight:600}
+.field input{
+  background:#0b0e15;border:1px solid var(--line);border-radius:10px;padding:11px 13px;outline:none;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,139,255,.16)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stripebox{background:#0b0e15;border:1px solid var(--line);border-radius:12px;padding:4px 13px 13px;margin-top:14px}
+.stripebox .field{margin-top:10px}
+.cardbrand{font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:700}
+
+/* ---------- admin ---------- */
+.admin{display:flex;gap:22px;align-items:flex-start}
+.admin-side{
+  width:196px;flex:none;display:flex;flex-direction:column;gap:4px;
+  position:sticky;top:86px;
+}
+.admin-title{font-size:11px;letter-spacing:.16em;color:var(--muted);font-weight:800;padding:0 12px 10px}
+.navbtn{
+  text-align:left;background:transparent;border:0;padding:10px 12px;border-radius:10px;
+  cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;
+}
+.navbtn:hover{background:var(--panel-2);color:var(--text)}
+.navbtn.active{background:var(--panel-2);color:var(--text);box-shadow:inset 2px 0 0 var(--accent)}
+.navbtn.danger{color:#ff8fa5;margin-top:10px}
+.admin-main{flex:1;min-width:0}
+
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;margin-bottom:16px;
+}
+.panel h3{margin:0 0 14px;font-size:14px;letter-spacing:.02em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:600}
+.stat .v{font-size:25px;font-weight:750;margin-top:6px}
+
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{
+  text-align:left;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);font-weight:700;
+}
+.tbl td{padding:11px 10px;border-bottom:1px solid #1b2030;vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr.clickable{cursor:pointer}
+.tbl tbody tr.clickable:hover{background:var(--panel-2)}
+.totals{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:7px}
+.totals > div{display:flex;justify-content:space-between;font-size:14px;color:var(--muted)}
+.totals .grand{color:var(--text);font-weight:750;font-size:16px;border-top:1px solid var(--line);padding-top:9px;margin-top:3px}
+
+.pill{
+  display:inline-block;padding:2.5px 9px;border-radius:999px;font-size:11.5px;
+  font-weight:750;text-transform:capitalize;letter-spacing:.02em;
+}
+.pill.paid{background:rgba(46,204,113,.14);color:#5ee08f}
+.pill.fulfilled{background:rgba(109,139,255,.16);color:#9db1ff}
+.pill.refunded{background:rgba(240,80,110,.14);color:#ff8fa5}
+.pill.pending{background:rgba(245,165,36,.14);color:#ffc061}
+.pill.open{background:rgba(138,147,171,.14);color:#a9b2c8}
+
+/* ---------- Stripe-like order detail ---------- */
+.od-top{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:20px}
+.od-amt{font-size:34px;font-weight:780;letter-spacing:-.02em;display:flex;align-items:center;gap:12px}
+.od-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start}
+.timeline{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.timeline li{position:relative;display:flex;flex-direction:column}
+.timeline li::before{
+  content:"";position:absolute;left:-25px;top:5px;width:10px;height:10px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 0 3px rgba(109,139,255,.16);
+}
+.cartcard{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--panel)}
+.cartcard .ch{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+
+.empty{padding:44px 20px;text-align:center;color:var(--muted)}
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,140%);z-index:200;
+  background:#1b2130;border:1px solid var(--line);padding:11px 18px;border-radius:11px;
+  font-size:14px;transition:transform .25s ease;box-shadow:0 12px 34px rgba(0,0,0,.5);
+}
+#toast.show{transform:translate(-50%,0)}
+
+@media (max-width:860px){
+  .admin{flex-direction:column}
+  .admin-side{width:100%;position:static;flex-direction:row;flex-wrap:wrap}
+  .admin-title{display:none}
+  .od-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand" onclick="location.hash='#/'">NIMBUS<span>.</span></div>
+  <nav>
+    <a href="#/" id="navShop">Shop</a>
+    <a href="#/admin" id="navAdmin">Admin</a>
+  </nav>
+  <button class="cartbtn" id="cartBtn">Cart <span class="badge" id="cartCount">0</span></button>
+</header>
+
+<main>
+  <section id="view-shop"></section>
+  <section id="view-admin" hidden></section>
+</main>
+
+<aside class="drawer" id="cartDrawer"></aside>
+<div id="modalRoot"></div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   helpers
+   ========================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const money = c => '$' + ((Number(c) || 0) / 100).toFixed(2);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = ts => ts ? new Date(Number(ts)).toLocaleString(undefined, {
+  month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit'
+}) : '—';
+
+let toastTimer;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* =========================================================
+   state
+   ========================================================= */
+const state = {
+  products: [],
+  items: [],                                  // [{productId, qty}]
+  cartId: localStorage.getItem('nimbus_cart_id') || null,
+  token: sessionStorage.getItem('nimbus_admin_token') || null,
+  adminTab: 'overview',
+  currentOrderId: null,
+};
+
+/* =========================================================
+   api
+   ========================================================= */
+async function api(path, { method = 'GET', body, auth = false } = {}) {
+  const headers = {};
+  if (body !== undefined) headers['content-type'] = 'application/json';
+  if (auth && state.token) headers['authorization'] = 'Bearer ' + state.token;
+
+  const res = await fetch('/api' + path, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  let data = {};
+  try { data = await res.json(); } catch {}
+  if (!res.ok) {
+    const err = new Error(data.error || `Request failed (${res.status})`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+/* =========================================================
+   cart
+   ========================================================= */
+function cartLines() {
+  return state.items.map(i => {
+    const p = state.products.find(x => x.id === i.productId) || { name: 'Item', price: 0, image: '' };
+    return { productId: i.productId, qty: i.qty, name: p.name, price: p.price, image: p.image };
+  });
+}
+function cartSubtotal() { return cartLines().reduce((s, l) => s + l.price * l.qty, 0); }
+function cartCount()    { return state.items.reduce((s, i) => s + i.qty, 0); }
+
+async function loadCart() {
+  try {
+    if (state.cartId) {
+      const { cart } = await api('/cart?id=' + encodeURIComponent(state.cartId));
+      if (cart) {
+        state.items = cart.items.map(i => ({ productId: i.productId, qty: i.qty }));
+        updateCartCount(); renderCart(); return;
+      }
+    }
+    const { cart } = await api('/cart', { method: 'POST', body: { items: [] } });
+    state.cartId = cart.id;
+    localStorage.setItem('nimbus_cart_id', cart.id);
+    state.items = [];
+  } catch (e) {
+    console.error(e);
+    toast('Cart unavailable: ' + e.message);
+  }
+  updateCartCount(); renderCart();
+}
+
+async function syncCart() {
+  try {
+    const { cart } = await api('/cart', {
+      method: 'POST',
+      body: { cartId: state.cartId, items: state.items },
+    });
+    state.cartId = cart.id;
+    localStorage.setItem('nimbus_cart_id', cart.id);
+    state.items = cart.items.map(i => ({ productId: i.productId, qty: i.qty }));
+    updateCartCount(); renderCart();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function addToCart(productId) {
+  const line = state.items.find(i => i.productId === productId);
+  if (line) line.qty = Math.min(99, line.qty + 1);
+  else state.items.push({ productId, qty: 1 });
+
+  updateCartCount(); renderCart(); openCart();
+  syncCart();
+}
+
+function setQty(productId, qty) {
+  const line = state.items.find(i => i.productId === productId);
+  if (!line) return;
+  line.qty = Math.max(0, Math.min(99, qty));
+  if (line.qty === 0) state.items = state.items.filter(i => i.productId !== productId);
+
+  updateCartCount(); renderCart();
+  syncCart();
+}
+
+function updateCartCount() { $('#cartCount').textContent = cartCount(); }
+
+function openCart()  { $('#cartDrawer').classList.add('open'); }
+function closeCart() { $('#cartDrawer').classList.remove('open'); }
+
+function renderCart() {
+  const lines = cartLines();
+  const sub = cartSubtotal();
+  const shipping = sub === 0 ? 0 : (sub >= 7500 ? 0 : 599);
+  const tax = Math.round(sub * 0.08);
+
+  $('#cartDrawer').innerHTML = `
+    <div class="drawer-head">
+      <h2>Your cart</h2>
+      <button class="iconbtn" data-close-cart>&times;</button>
+    </div>
+    <div class="drawer-body">
+      ${lines.length ? lines.map(l => `
+        <div class="line">
+          <div class="thumb">${l.image ? `<img src="${esc(l.image)}" alt="">` : esc((l.name[0] || '?'))}</div>
+          <div class="info">
+            <b>${esc(l.name)}</b>
+            <div class="muted small">${money(l.price)}</div>
+            <div class="qty" style="margin-top:6px">
+              <button data-dec="${esc(l.productId)}">&minus;</button>
+              <span>${l.qty}</span>
+              <button data-inc="${esc(l.productId)}">+</button>
+              <button class="iconbtn" style="margin-left:auto" data-del="${esc(l.productId)}">&times;</button>
+            </div>
+          </div>
+          <div style="font-weight:700">${money(l.price * l.qty)}</div>
+        </div>`).join('')
+      : `<div class="empty">Your cart is empty.</div>`}
+    </div>
+    <div class="drawer-foot">
+      <div class="sumrow"><span class="muted">Subtotal</span><span>${money(sub)}</span></div>
+      <div class="sumrow"><span class="muted">Shipping</span><span>${shipping ? money(shipping) : 'Free'}</span></div>
+      <div class="sumrow"><span class="muted">Tax (8%)</span><span>${money(tax)}</span></div>
+      <div class="sumrow total"><span>Total</span><span>${money(sub + shipping + tax)}</span></div>
+      <button class="btn" style="width:100%;padding:12px" data-checkout ${lines.length ? '' : 'disabled'}>
+        Checkout
+      </button>
+    </div>`;
+}
+
+/* =========================================================
+   shop view
+   ========================================================= */
+async function loadProducts() {
+  const { products } = await api('/products');
+  state.products = products;
+}
+
+function renderShop() {
+  $('#view-shop').innerHTML = `
+    <section class="hero">
+      <h1>Gear that just works.</h1>
+      <p>Small-batch essentials, shipped fast. This is a demo store — no real payments are processed.</p>
+    </section>
+    <div class="grid">
+      ${state.products.length ? state.products.map(p => `
+        <article class="card">
+          <div class="thumb">${p.image
+            ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`
+            : esc((p.name[0] || '?'))}</div>
+          <div class="pbody">
+            <h3>${esc(p.name)}</h3>
+            <p>${esc(p.description || '')}</p>
+            <div class="prow">
+              <span class="price">${money(p.price)}</span>
+              <button class="btn" data-add="${esc(p.id)}">Add to cart</button>
+            </div>
+          </div>
+        </article>`).join('')
+      : `<div class="empty">No products yet. Add some in the <a href="#/admin" style="color:var(--accent)">admin panel</a>.</div>`}
+    </div>`;
+}
+
+/* =========================================================
+   checkout
+   ========================================================= */
+function openCheckout() {
+  if (!state.items.length) return toast('Your cart is empty');
+
+  const sub = cartSubtotal();
+  const shipping = sub >= 7500 ? 0 : 599;
+  const tax = Math.round(sub * 0.08);
+
+  $('#modalRoot').innerHTML = `
+    <div class="overlay" data-overlay>
+      <div class="modal" data-modal>
+        <h2>Checkout</h2>
+        <p class="muted small" style="margin:0">Total due <b style="color:var(--text)">${money(sub + shipping + tax)}</b></p>
+
+        <form id="checkoutForm">
+          <div class="field">
+            <label>Full name</label>
+            <input name="name" required placeholder="Ada Lovelace" autocomplete="name">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input name="email" type="email" required placeholder="ada@example.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label>Shipping address</label>
+            <input name="address" required placeholder="123 Analytical Way" autocomplete="street-address">
+          </div>
+          <div class="row2">
+            <div class="field"><label>City</label><input name="city" required placeholder="London"></div>
+            <div class="field"><label>ZIP / Postcode</label><input name="zip" required placeholder="SW1A 1AA"></div>
+          </div>
+          <div class="field">
+            <label>Country</label>
+            <input name="country" required placeholder="United Kingdom">
+          </div>
+
+          <div class="stripebox">
+            <div class="field">
+              <label style="display:flex;justify-content:space-between">
+                <span>Card number</span><span class="cardbrand" id="cardBrand">CARD</span>
+              </label>
+              <input name="card" id="cardNumber" inputmode="numeric" required
+                     placeholder="4242 4242 4242 4242" maxlength="19" autocomplete="cc-number">
+            </div>
+            <div class="row2">
+              <div class="field"><label>Expiry</label>
+                <input name="exp" id="cardExp" required placeholder="MM / YY" maxlength="7" autocomplete="cc-exp"></div>
+              <div class="field"><label>CVC</label>
+                <input name="cvc" id="cardCvc" required placeholder="123" maxlength="4" inputmode="numeric" autocomplete="cc-csc"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button type="button" class="btn ghost" style="flex:1" data-close-modal>Cancel</button>
+            <button type="submit" class="btn" style="flex:2">Pay ${money(sub + shipping + tax)}</button>
+          </div>
+          <p class="muted small" style="margin:12px 0 0;text-align:center">Demo only — no card is charged.</p>
+        </form>
+      </div>
+    </div>`;
+
+  // card input formatting
+  $('#cardNumber').addEventListener('input', e => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+    e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+    const brand = digits[0] === '4' ? 'VISA'
+      : /^5[1-5]/.test(digits) ? 'MASTERCARD'
+      : /^3[47]/.test(digits) ? 'AMEX'
+      : /^6/.test(digits) ? 'DISCOVER' : 'CARD';
+    $('#cardBrand').textContent = brand;
+  });
+  $('#cardExp').addEventListener('input', e => {
+    const d = e.target.value.replace(/\D/g, '').slice(0, 4);
+    e.target.value = d.length > 2 ? d.slice(0, 2) + ' / ' + d.slice(2) : d;
+  });
+  $('#cardCvc').addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  $('#checkoutForm').addEventListener('submit', submitCheckout);
+  $('[data-overlay]').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+}
+
+function closeModal() { $('#modalRoot').innerHTML = ''; }
+
+async function submitCheckout(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = form.querySelector('button[type=submit]');
+  const fd = new FormData(form);
+  const cardNumber = String(fd.get('card') || '').replace(/\D/g, '');
+
+  if (cardNumber.length < 15) return toast('Please enter a valid card number.');
+
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+
+  try {
+    await syncCart();   // make sure the server cart matches
+
+    const { order } = await api('/checkout', {
+      method: 'POST',
+      body: {
+        cartId: state.cartId,
+        customer: {
+          name: fd.get('name'),
+          email: fd.get('email'),
+          address: fd.get('address'),
+          city: fd.get('city'),
+          zip: fd.get('zip'),
+          country: fd.get('country'),
+        },
+        card: { number: cardNumber, exp: fd.get('exp'), cvc: fd.get('cvc') },
+      },
+    });
+
+    // reset local cart
+    state.items = [];
+    state.cartId = null;
+    localStorage.removeItem('nimbus_cart_id');
+    updateCartCount();
+    await loadCart();
+
+    showOrderSuccess(order);
+  } catch (err) {
+    toast(err.message);
+    btn.disabled = false;
+    btn.textContent = 'Pay';
+  }
+}
+
+function showOrderSuccess(order) {
+  $('#modalRoot').innerHTML = `
+    <div class="overlay" data-overlay>
+      <div class="modal" style="text-align:center">
+        <div style="width:62px;height:62px;margin:4px auto 16px;border-radius:50%;
+                    background:rgba(46,204,113,.14);display:grid;place-items:center;font-size:30px;color:#5ee08f">✓</div>
+        <h2>Payment successful</h2>
+        <p class="muted" style="margin:6px 0 18px">
+          Order <b style="color:var(--text)">${esc(order.number)}</b> · ${money(order.total)}
+        </p>
+        <div class="panel" style="text-align:left;margin:0 0 18px">
+          ${order.items.map(i => `
+            <div class="sumrow" style="margin-bottom:8px">
+              <span>${esc(i.name)} <span class="muted small">× ${i.qty}</span></span>
+              <span>${money(i.price * i.qty)}</span>
+            </div>`).join('')}
+          <div class="sumrow" style="border-top:1px solid var(--line);padding-top:10px;margin-top:6px">
+            <span class="muted">Total paid</span><b>${money(order.total)}</b>
+          </div>
+        </div>
+        <button class="btn" style="width:100%" data-close-modal>Continue shopping</button>
+      </div>
+    </div>`;
+}
+
+/* =========================================================
+   admin
+   ========================================================= */
+function renderAdmin() {
+  const view = $('#view-admin');
+
+  if (!state.token) {
+    view.innerHTML = `
+      <div style="max-width:400px;margin:60px auto">
+        <div class="panel">
+          <h3 style="font-size:19px;margin-bottom:4px">Admin access</h3>
+          <p class="muted small" style="margin:0 0 6px">Enter the admin password to continue.</p>
+          <form id="loginForm">
+            <div class="field">
+              <label>Password</label>
+              <input type="password" name="password" required autocomplete="current-password" autofocus>
+            </div>
+            <button class="btn" style="width:100%;margin-top:18px">Unlock</button>
+          </form>
+        </div>
+      </div>`;
+    $('#loginForm').addEventListener('submit', adminLogin);
+    return;
+  }
+
+  const tabs = [
+    ['overview', 'Overview'],
+    ['products', 'Products'],
+    ['carts',    'Live carts'],
+    ['orders',   'Orders'],
+  ];
+
+  view.innerHTML = `
+    <div class="admin">
+      <aside class="admin-side">
+        <div class="admin-title">ADMIN PANEL</div>
+        ${tabs.map(([k, l]) =>
+          `<button class="navbtn ${state.adminTab === k ? 'active' : ''}" data-tab="${k}">${l}</button>`).join('')}
+        <button class="navbtn danger" data-logout>Sign out</button>
+      </aside>
+      <div class="admin-main" id="adminMain">
+        <div class="empty">Loading…</div>
+      </div>
+    </div>`;
+
+  renderAdminMain();
+}
+
+async function adminLogin(e) {
+  e.preventDefault();
+  const password = new FormData(e.target).get('password');
+  try {
+    const { token } = await api('/admin/login', { method: 'POST', body: { password } });
+    state.token = token;
+    sessionStorage.setItem('nimbus_admin_token', token);
+    renderAdmin();
+  } catch (err) {
+    toast(err.message);
+  }
+}
+
+function adminLogout() {
+  state.token = null;
+  state.currentOrderId = null;
+  sessionStorage.removeItem('nimbus_admin_token');
+  renderAdmin();
+}
+
+async function renderAdminMain() {
+  const main = $('#adminMain');
+  if (!main) return;
+
+  if (state.currentOrderId) return renderOrderDetail(state.currentOrderId);
+
+  main.innerHTML = `<div class="empty">Loading…</div>`;
+
+  try {
+    if (state.adminTab === 'overview') {
+      const { stats } = await api('/admin/stats', { auth: true });
+      const { orders } = await api('/orders', { auth: true });
+
+      main.innerHTML = `
+        <div class="stats">
+          <div class="stat"><div class="k">REVENUE</div><div class="v">${money(stats.revenue)}</div></div>
+          <div class="stat"><div class="k">ORDERS</div><div class="v">${stats.orders}</div></div>
+          <div class="stat"><div class="k">OPEN CARTS</div><div class="v">${stats.carts}</div></div>
+          <div class="stat"><div class="k">PRODUCTS</div><div class="v">${stats.products}</div></div>
+        </div>
+        <div class="panel">
+          <h3>Recent orders</h3>
+          ${orders.length ? `
+          <table class="tbl">
+            <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="right">Total</th></tr></thead>
+            <tbody>
+              ${orders.slice(0, 8).map(o => `
+                <tr class="clickable" data-order="${esc(o.id)}">
+                  <td><b>${esc(o.number)}</b><div class="muted small">${fmtDate(o.created_at)}</div></td>
+                  <td>${esc(o.customer_name)}<div class="muted small">${esc(o.customer_email)}</div></td>
+                  <td><span class="pill ${esc(o.status)}">${esc(o.status)}</span></td>
+                  <td class="right"><b>${money(o.total)}</b></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>` : `<div class="empty">No orders yet.</div>`}
+        </div>`;
+      return;
+    }
+
+    if (state.adminTab === 'products') {
+      const { products } = await api('/products');
+      main.innerHTML = `
+        <div class="panel">
+          <h3>Add a product</h3>
+          <form id="productForm">
+            <div class="row2">
+              <div class="field"><label>Name</label><input name="name" required placeholder="Aurora Hoodie"></div>
+              <div class="field"><label>Price (USD)</label><input name="price" required type="number" step="0.01" min="0" placeholder="49.00"></div>
+            </div>
+            <div class="field"><label>Description</label><input name="description" placeholder="Heavyweight fleece, unisex fit"></div>
+            <div class="row2">
+              <div class="field"><label>Image URL (optional)</label><input name="image" placeholder="https://…"></div>
+              <div class="field"><label>Stock</label><input name="stock" type="number" min="0" value="25"></div>
+            </div>
+            <button class="btn" style="margin-top:18px">Add product</button>
+          </form>
+        </div>
+        <div class="panel">
+          <h3>Catalog (${products.length})</h3>
+          ${products.length ? `
+          <table class="tbl">
+            <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+            <tbody>
+              ${products.map(p => `
+                <tr>
+                  <td><b>${esc(p.name)}</b><div class="muted small">${esc(p.description || '')}</div></td>
+                  <td>${money(p.price)}</td>
+                  <td>${p.stock}</td>
+                  <td class="right"><button class="btn danger sm" data-del-product="${esc(p.id)}">Delete</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>` : `<div class="empty">No products yet.</div>`}
+        </div>`;
+      $('#productForm').addEventListener('submit', addProduct);
+      return;
+    }
+
+    if (state.adminTab === 'carts') {
+      const { carts } = await api('/admin/carts', { auth: true });
+      main.innerHTML = `
+        <div class="panel">
+          <h3>Live carts (${carts.length})</h3>
+          <p class="muted small" style="margin:-8px 0 16px">Every visitor gets a cart the moment they land. Open carts are still shoppable.</p>
+          ${carts.length ? carts.map(c => `
+            <div class="cartcard">
+              <div class="ch">
+                <div>
+                  <b style="font-size:13.5px">${esc(c.id)}</b>
+                  <div class="muted small">Updated ${fmtDate(c.updatedAt)} · ${c.count} item${c.count === 1 ? '' : 's'}</div>
+                </div>
+                <div style="text-align:right">
+                  <span class="pill ${c.status === 'open' ? 'open' : 'fulfilled'}">${esc(c.status)}</span>
+                  <div style="font-weight:750;margin-top:4px">${money(c.subtotal)}</div>
+                </div>
+              </div>
+              ${c.items.length ? c.items.map(i => `
+                <div class="sumrow" style="font-size:13.5px;margin-top:4px">
+                  <span class="muted">${esc(i.name)} × ${i.qty}</span>
+                  <span>${money(i.price * i.qty)}</span>
+                </div>`).join('') : `<div class="muted small">Empty cart</div>`}
+            </div>`).join('') : `<div class="empty">No carts yet.</div>`}
+        </div>`;
+      return;
+    }
+
+    if (state.adminTab === 'orders') {
+      const { orders } = await api('/orders', { auth: true });
+      main.innerHTML = `
+        <div class="panel">
+          <h3>Orders (${orders.length})</h3>
+          ${orders.length ? `
+          <table class="tbl">
+            <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Status</th><th class="right">Total</th></tr></thead>
+            <tbody>
+              ${orders.map(o => `
+                <tr class="clickable" data-order="${esc(o.id)}">
+                  <td><b>${esc(o.number)}</b><div class="muted small">${fmtDate(o.created_at)}</div></td>
+                  <td>${esc(o.customer_name)}<div class="muted small">${esc(o.customer_email)}</div></td>
+                  <td>${o.item_count}</td>
+                  <td><span class="pill ${esc(o.status)}">${esc(o.status)}</span></td>
+                  <td class="right"><b>${money(o.total)}</b></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>` : `<div class="empty">No orders yet. Place a test order from the shop!</div>`}
+        </div>`;
+      return;
+    }
+  } catch (err) {
+    if (err.status === 401) { adminLogout(); return toast('Session expired, please sign in again.'); }
+    main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
+  }
+}
+
+/* ---------- add / delete product ---------- */
+async function addProduct(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const btn = e.target.querySelector('button[type=submit], button:not([type])');
+  if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+  try {
+    await api('/products', {
+      method: 'POST',
+      auth: true,
+      body: {
+        name: fd.get('name'),
+        description: fd.get('description'),
+        price: Math.round(parseFloat(fd.get('price') || '0') * 100),
+        image: fd.get('image'),
+        stock: parseInt(fd.get('stock') || '0', 10),
+      },
+    });
+    toast('Product added');
+    await loadProducts();
+    renderAdminMain();
+  } catch (err) {
+    toast(err.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Add product'; }
+  }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  try {
+    await api('/products/' + encodeURIComponent(id), { method: 'DELETE', auth: true });
+    toast('Product deleted');
+    await loadProducts();
+    renderAdminMain();
+  } catch (err) { toast(err.message); }
+}
+
+/* ---------- Stripe-like order detail ---------- */
+async function renderOrderDetail(id) {
+  const main = $('#adminMain');
+  main.innerHTML = `<div class="empty">Loading order…</div>`;
+  try {
+    const { order: o } = await api('/orders/' + encodeURIComponent(id), { auth: true });
+
+    main.innerHTML = `
+      <div class="od-top">
+        <button class="btn ghost sm" data-back-orders>← Orders</button>
+        <div style="flex:1"></div>
+        <button class="btn ghost sm" data-fulfill="${esc(o.id)}">Mark fulfilled</button>
+        <button class="btn danger sm" data-refund="${esc(o.id)}">Refund</button>
+      </div>
+
+      <div class="od-amt">${money(o.total)} <span class="pill ${esc(o.status)}">${esc(o.status)}</span></div>
+      <div class="muted small" style="margin:6px 0 22px">
+        ${esc(o.number)} · ${fmtDate(o.created_at)}
+      </div>
+
+      <div class="od-grid">
+        <div>
+          <div class="panel">
+            <h3>Items</h3>
+            <table class="tbl">
+              <tbody>
+                ${o.items.map(i => `
+                  <tr>
+                    <td>${esc(i.name)}<div class="muted small">${money(i.price)} × ${i.qty}</div></td>
+                    <td class="right">${money(i.price * i.qty)}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+            <div class="totals">
+              <div><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
+              <div><span>Shipping</span><span>${o.shipping ? money(o.shipping) : 'Free'}</span></div>
+              <div><span>Tax</span><span>${money(o.tax)}</span></div>
+              <div class="grand"><span>Total</span><span>${money(o.total)}</span></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Timeline</h3>
+            <ul class="timeline">
+              <li><b>Payment succeeded</b><span class="muted small">${fmtDate(o.created_at)}</span></li>
+              <li><b>Order created</b><span class="muted small">${fmtDate(o.created_at)}</span></li>
+              ${o.status === 'fulfilled' ? `<li><b>Marked as fulfilled</b></li>` : ''}
+              ${o.status === 'refunded' ? `<li><b>Refund issued</b></li>` : ''}
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <h3>Customer</h3>
+            <div>${esc(o.customer_name)}</div>
+            <div class="muted small">${esc(o.customer_email)}</div>
+          </div>
+          <div class="panel">
+            <h3>Payment method</h3>
+            <div>${esc(o.card_brand)} •••• ${esc(o.card_last4)}</div>
+            <div class="muted small" style="margin-top:4px">${esc(o.payment_intent)}</div>
+          </div>
+          <div class="panel">
+            <h3>Shipping address</h3>
+            <div class="muted" style="white-space:pre-line">${esc(o.shipping_address)}</div>
+          </div>
+          <div class="panel">
+            <h3>Metadata</h3>
+            <div class="sumrow small"><span class="muted">Order ID</span><span>${esc(o.id)}</span></div>
+            <div class="sumrow small" style="margin-top:6px"><span class="muted">Cart ID</span><span>${esc(o.cart_id || '—')}</span></div>
+          </div>
+        </div>
+      </div>`;
+  } catch (err) {
+    main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
+  }
+}
+
+async function updateOrderStatus(id, status) {
+  try {
+    await api('/orders/' + encodeURIComponent(id), {
+      method: 'PATCH', auth: true, body: { status },
+    });
+    toast('Order ' + status);
+    renderOrderDetail(id);
+  } catch (err) { toast(err.message); }
+}
+
+/* =========================================================
+   router
+   ========================================================= */
+function router() {
+  const hash = location.hash || '#/';
+  const isAdmin = hash.startsWith('#/admin');
+
+  $('#view-shop').hidden = isAdmin;
+  $('#view-admin').hidden = !isAdmin;
+  $('#navShop').classList.toggle('on', !isAdmin);
+  $('#navAdmin').classList.toggle('on', isAdmin);
+  closeCart();
+
+  if (isAdmin) renderAdmin();
+  else renderShop();
+}
+
+/* =========================================================
+   global events
+   ========================================================= */
+document.addEventListener('click', e => {
+  const t = e.target;
+
+  const add = t.closest('[data-add]');
+  if (add) return addToCart(add.dataset.add);
+
+  const inc = t.closest('[data-inc]');
+  if (inc) {
+    const line = state.items.find(i => i.productId === inc.dataset.inc);
+    return setQty(inc.dataset.inc, (line ? line.qty : 0) + 1);
+  }
+
+  const dec = t.closest('[data-dec]');
+  if (dec) {
+    const line = state.items.find(i => i.productId === dec.dataset.dec);
+    return setQty(dec.dataset.dec, (line ? line.qty : 0) - 1);
+  }
+
+  const del = t.closest('[data-del]');
+  if (del) return setQty(del.dataset.del, 0);
+
+  if (t.closest('[data-close-cart]')) return closeCart();
+  if (t.closest('[data-checkout]'))    return openCheckout();
+  if (t.closest('[data-close-modal]')) return closeModal();
+
+  const tab = t.closest('[data-tab]');
+  if (tab) {
+    state.adminTab = tab.dataset.tab;
+    state.currentOrderId = null;
+    $$('.navbtn').forEach(b => b.classList.toggle('active', b === tab));
+    return renderAdminMain();
+  }
+
+  if (t.closest('[data-logout]')) return adminLogout();
+
+  const order = t.closest('[data-order]');
+  if (order) { state.currentOrderId = order.dataset.order; return renderOrderDetail(order.dataset.order); }
+
+  if (t.closest('[data-back-orders]')) { state.currentOrderId = null; return renderAdminMain(); }
+
+  const delP = t.closest('[data-del-product]');
+  if (delP) return deleteProduct(delP.dataset.delProduct);
+
+  const ful = t.closest('[data-fulfill]');
+  if (ful) return updateOrderStatus(ful.dataset.fulfill, 'fulfilled');
+
+  const ref = t.closest('[data-refund]');
+  if (ref) {
+    if (confirm('Refund this order?')) updateOrderStatus(ref.dataset.refund, 'refunded');
+    return;
+  }
+});
+
+$('#cartBtn').addEventListener('click', () => {
+  $('#cartDrawer').classList.contains('open') ? closeCart() : openCart();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeCart(); }
+});
+
+window.addEventListener('hashchange', router);
+
+/* =========================================================
+   boot
+   ========================================================= */
+(async function boot() {
+  try {
+    await loadProducts();
+  } catch (e) {
+    $('#view-shop').innerHTML = `<div class="panel"><div class="empty">
+      Could not load products.<br><span class="small">${esc(e.message)}</span></div></div>`;
+  }
+  await loadCart();
+  router();
+})();
+</script>
+</body>
+</html>
