@@ -1,6 +1,3 @@
-// Real API when a backend is available (Cloudflare Worker).
-// Falls back to a localStorage-backed mock when there isn't one.
-
 import { CONFIG } from './config.js';
 import { uid, readLS, writeLS } from './utils.js';
 
@@ -136,6 +133,11 @@ const mock = {
       items: lines,
       subtotal, shipping, tax, total,
       status: 'paid',
+      shipping_status: 'processing',
+      carrier: '',
+      tracking_number: '',
+      estimated_delivery: '',
+      shipping_notes: '',
       card_brand: brand,
       card_last4: num.slice(-4),
       payment_intent: 'pi_' + uid(),
@@ -155,6 +157,33 @@ const mock = {
     if (cart) { cart.status = 'fulfilled'; cart.updatedAt = Date.now(); writeLS(LS.carts, carts); }
 
     return { order };
+  },
+
+  async trackOrder(number, email) {
+    const orders = readLS(LS.orders, []);
+    const n = String(number || '').trim().toUpperCase();
+    const e = String(email || '').trim().toLowerCase();
+    const o = orders.find(x =>
+      x.number.toUpperCase() === n &&
+      (x.customer_email || '').toLowerCase() === e
+    );
+    if (!o) throw new Error('Order not found');
+    return {
+      order: {
+        number: o.number,
+        status: o.status,
+        shipping_status: o.shipping_status || 'processing',
+        carrier: o.carrier || '',
+        tracking_number: o.tracking_number || '',
+        estimated_delivery: o.estimated_delivery || '',
+        shipping_notes: o.shipping_notes || '',
+        items: o.items,
+        subtotal: o.subtotal, shipping: o.shipping, tax: o.tax, total: o.total,
+        customer_name: o.customer_name,
+        shipping_address: o.shipping_address,
+        created_at: o.created_at,
+      },
+    };
   },
 
   async login(password) {
@@ -200,7 +229,11 @@ const mock = {
     return { orders: readLS(LS.orders, []).map(o => ({
       id: o.id, number: o.number,
       customer_name: o.customer_name, customer_email: o.customer_email,
-      total: o.total, status: o.status, created_at: o.created_at,
+      total: o.total, status: o.status,
+      shipping_status: o.shipping_status || 'processing',
+      carrier: o.carrier || '',
+      tracking_number: o.tracking_number || '',
+      created_at: o.created_at,
       item_count: o.items.reduce((s, i) => s + i.qty, 0),
     }))};
   },
@@ -211,11 +244,11 @@ const mock = {
     return { order: o };
   },
 
-  async updateOrder(id, status) {
+  async updateOrder(id, patch) {
     const orders = readLS(LS.orders, []);
     const o = orders.find(x => x.id === id);
     if (!o) throw new Error('Order not found');
-    o.status = status;
+    Object.assign(o, patch);
     writeLS(LS.orders, orders);
     return { ok: true };
   },
@@ -250,6 +283,12 @@ export const api = {
     const mode = await detectMode();
     return mode === 'real' ? real('/checkout', { method:'POST', body }) : mock.checkout(body);
   },
+  async trackOrder(number, email) {
+    const mode = await detectMode();
+    return mode === 'real'
+      ? real('/track?number=' + encodeURIComponent(number) + '&email=' + encodeURIComponent(email))
+      : mock.trackOrder(number, email);
+  },
   async login(password) {
     const mode = await detectMode();
     return mode === 'real' ? real('/admin/login', { method:'POST', body:{ password } }) : mock.login(password);
@@ -270,11 +309,11 @@ export const api = {
     const mode = await detectMode();
     return mode === 'real' ? real('/orders/' + encodeURIComponent(id), { auth:true }) : mock.order(id);
   },
-  async updateOrder(id, status) {
+  async updateOrder(id, patch) {
     const mode = await detectMode();
     return mode === 'real'
-      ? real('/orders/' + encodeURIComponent(id), { method:'PATCH', auth:true, body:{ status } })
-      : mock.updateOrder(id, status);
+      ? real('/orders/' + encodeURIComponent(id), { method:'PATCH', auth:true, body: patch })
+      : mock.updateOrder(id, patch);
   },
   mode() { return MODE; },
 };
