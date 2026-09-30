@@ -8,9 +8,21 @@ const LS = {
   sessions:    'nimbus_mock_sessions',
   subscribers: 'nimbus_mock_subscribers',
   messages:    'nimbus_mock_messages',
+  about:       'nimbus_mock_about',
 };
 
 let MODE = null;
+
+const DEFAULT_ABOUT = {
+  title: 'Small friends, made to last.',
+  subtitle: "We're a tiny team based in Texas, obsessed with making everyday essentials you'll actually keep.",
+  story: "Nimbus started in a garage in 2022 with one simple idea: make things well, charge fairly, and stand behind them.\n\nWe work with a handful of small mills and family-run workshops — the kind of partners whose names we know and whose hands we trust. Every piece is designed in-house, tested for months, and made in small batches so nothing sits on a shelf.\n\nWe don't chase trends. We chase the kind of objects you reach for every day, wash a hundred times, and still love a year later. If something isn't right, we fix it. That's the whole promise.",
+  values: [
+    { title: 'Made with care', body: 'Designed in-house and produced in small batches by partners we know by name.' },
+    { title: 'Built to last',    body: "We choose materials for longevity, not margin. Wash it a hundred times — it should still feel new." },
+    { title: 'Here for you',     body: "Real humans answer every message. If something's wrong, we'll make it right." },
+  ],
+};
 
 const SEED = [
   { id:'prod_aurora_hoodie', name:'Aurora Hoodie',     description:'Heavyweight fleece, unisex fit.',      price:4900, image:'', stock:25, created_at: Date.now() - 86400000 * 1 },
@@ -30,6 +42,7 @@ function mockInit() {
   if (!readLS(LS.sessions))    writeLS(LS.sessions, []);
   if (!readLS(LS.subscribers)) writeLS(LS.subscribers, []);
   if (!readLS(LS.messages))    writeLS(LS.messages, []);
+  if (!readLS(LS.about))       writeLS(LS.about, DEFAULT_ABOUT);
 }
 
 async function detectMode() {
@@ -201,6 +214,28 @@ const mock = {
     return { ok: true, contactEmail: CONFIG.CONTACT_EMAIL };
   },
 
+  async about() {
+    const a = readLS(LS.about, null);
+    if (!a) { writeLS(LS.about, DEFAULT_ABOUT); return { about: DEFAULT_ABOUT, isDefault: true }; }
+    return { about: a, isDefault: false };
+  },
+
+  async updateAbout(body) {
+    const about = {
+      title:    String(body.title || '').slice(0, 200),
+      subtitle: String(body.subtitle || '').slice(0, 500),
+      story:    String(body.story || '').slice(0, 8000),
+      values:   Array.isArray(body.values)
+        ? body.values.slice(0, 6).map(v => ({
+            title: String(v?.title || '').slice(0, 100),
+            body:  String(v?.body  || '').slice(0, 500),
+          }))
+        : [],
+    };
+    writeLS(LS.about, about);
+    return { ok: true, about };
+  },
+
   async login(password) {
     if (password !== CONFIG.ADMIN_PASSWORD) throw new Error('Invalid password');
     const sessions = readLS(LS.sessions, []);
@@ -272,16 +307,13 @@ const mock = {
     return { ok: true };
   },
 
-  async subscribers() {
-    return { subscribers: readLS(LS.subscribers, []) };
-  },
+  async subscribers() { return { subscribers: readLS(LS.subscribers, []) }; },
   async deleteSubscriber(id) {
     writeLS(LS.subscribers, readLS(LS.subscribers, []).filter(s => s.id !== id));
     return { ok: true };
   },
-  async messages() {
-    return { messages: readLS(LS.messages, []) };
-  },
+
+  async messages() { return { messages: readLS(LS.messages, []) }; },
   async updateMessage(id, status) {
     const msgs = readLS(LS.messages, []);
     const m = msgs.find(x => x.id === id);
@@ -338,6 +370,16 @@ export const api = {
   async contact(body) {
     const mode = await detectMode();
     return mode === 'real' ? real('/contact', { method:'POST', body }) : mock.contact(body);
+  },
+  async about() {
+    const mode = await detectMode();
+    return mode === 'real' ? real('/about') : mock.about();
+  },
+  async updateAbout(body) {
+    const mode = await detectMode();
+    return mode === 'real'
+      ? real('/admin/about', { method:'PUT', auth:true, body })
+      : mock.updateAbout(body);
   },
   async login(password) {
     const mode = await detectMode();
