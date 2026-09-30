@@ -16,10 +16,12 @@ export const store = {
 
   adminTab: 'overview',
   currentOrderId: null,
+  currentMessageId: null,
 
+  /* ---------- cart math ---------- */
   cartLines() {
     return this.items.map(i => {
-      const p = this.products.find(x => x.id === i.productId) || { name:'Item', price:0, image:'' };
+      const p = this.products.find(x => x.id === i.productId) || { name: 'Item', price: 0, image: '' };
       return { productId: i.productId, qty: i.qty, name: p.name, price: p.price, image: p.image };
     });
   },
@@ -31,8 +33,8 @@ export const store = {
     const c = CONFIG.COUPONS[this.coupon];
     if (!c) return 0;
     const sub = this.cartSubtotal();
-    if (c.type === 'percent')  return Math.round(sub * c.value / 100);
-    if (c.type === 'flat')     return Math.min(sub, c.value);
+    if (c.type === 'percent') return Math.round(sub * c.value / 100);
+    if (c.type === 'flat')    return Math.min(sub, c.value);
     return 0;
   },
   shippingFor(subtotal) {
@@ -50,6 +52,7 @@ export const store = {
     return { sub, disc, shipping, tax, total: taxable + shipping + tax };
   },
 
+  /* ---------- wishlist ---------- */
   isWished(id) { return this.wishlist.includes(id); },
   toggleWish(id) {
     if (this.isWished(id)) this.wishlist = this.wishlist.filter(x => x !== id);
@@ -58,11 +61,13 @@ export const store = {
     return this.isWished(id);
   },
 
+  /* ---------- recently viewed ---------- */
   pushRecent(id) {
     this.recent = [id, ...this.recent.filter(x => x !== id)].slice(0, 6);
     writeLS(CONFIG.STORAGE.recent, this.recent);
   },
 
+  /* ---------- coupons ---------- */
   applyCoupon(code) {
     const key = String(code || '').trim().toUpperCase();
     if (!CONFIG.COUPONS[key]) return { ok: false, error: 'Invalid code' };
