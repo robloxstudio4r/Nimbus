@@ -2,10 +2,12 @@ import { CONFIG } from './config.js';
 import { uid, readLS, writeLS } from './utils.js';
 
 const LS = {
-  products: 'nimbus_mock_products',
-  carts:    'nimbus_mock_carts',
-  orders:   'nimbus_mock_orders',
-  sessions: 'nimbus_mock_sessions',
+  products:    'nimbus_mock_products',
+  carts:       'nimbus_mock_carts',
+  orders:      'nimbus_mock_orders',
+  sessions:    'nimbus_mock_sessions',
+  subscribers: 'nimbus_mock_subscribers',
+  messages:    'nimbus_mock_messages',
 };
 
 let MODE = null;
@@ -22,10 +24,12 @@ const SEED = [
 ];
 
 function mockInit() {
-  if (!readLS(LS.products)) writeLS(LS.products, SEED);
-  if (!readLS(LS.carts))    writeLS(LS.carts, []);
-  if (!readLS(LS.orders))   writeLS(LS.orders, []);
-  if (!readLS(LS.sessions)) writeLS(LS.sessions, []);
+  if (!readLS(LS.products))    writeLS(LS.products, SEED);
+  if (!readLS(LS.carts))       writeLS(LS.carts, []);
+  if (!readLS(LS.orders))      writeLS(LS.orders, []);
+  if (!readLS(LS.sessions))    writeLS(LS.sessions, []);
+  if (!readLS(LS.subscribers)) writeLS(LS.subscribers, []);
+  if (!readLS(LS.messages))    writeLS(LS.messages, []);
 }
 
 async function detectMode() {
@@ -134,10 +138,7 @@ const mock = {
       subtotal, shipping, tax, total,
       status: 'paid',
       shipping_status: 'processing',
-      carrier: '',
-      tracking_number: '',
-      estimated_delivery: '',
-      shipping_notes: '',
+      carrier: '', tracking_number: '', estimated_delivery: '', shipping_notes: '',
       card_brand: brand,
       card_last4: num.slice(-4),
       payment_intent: 'pi_' + uid(),
@@ -168,22 +169,36 @@ const mock = {
       (x.customer_email || '').toLowerCase() === e
     );
     if (!o) throw new Error('Order not found');
-    return {
-      order: {
-        number: o.number,
-        status: o.status,
-        shipping_status: o.shipping_status || 'processing',
-        carrier: o.carrier || '',
-        tracking_number: o.tracking_number || '',
-        estimated_delivery: o.estimated_delivery || '',
-        shipping_notes: o.shipping_notes || '',
-        items: o.items,
-        subtotal: o.subtotal, shipping: o.shipping, tax: o.tax, total: o.total,
-        customer_name: o.customer_name,
-        shipping_address: o.shipping_address,
-        created_at: o.created_at,
-      },
-    };
+    return { order: o };
+  },
+
+  async subscribe({ name, email }) {
+    const subs = readLS(LS.subscribers, []);
+    const e = String(email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new Error('Please enter a valid email');
+    if (subs.find(s => s.email === e)) return { ok: true, alreadySubscribed: true };
+
+    subs.unshift({ id: uid('sub_'), name: name || '', email: e, created_at: Date.now() });
+    writeLS(LS.subscribers, subs);
+    return { ok: true, contactEmail: CONFIG.CONTACT_EMAIL };
+  },
+
+  async contact({ name, email, subject, message }) {
+    const msgs = readLS(LS.messages, []);
+    const e = String(email || '').trim().toLowerCase();
+    if (!name || !e || !message) throw new Error('Name, email, and message are required');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new Error('Please enter a valid email');
+
+    msgs.unshift({
+      id: uid('msg_'),
+      name, email: e,
+      subject: subject || 'General question',
+      message,
+      status: 'new',
+      created_at: Date.now(),
+    });
+    writeLS(LS.messages, msgs);
+    return { ok: true, contactEmail: CONFIG.CONTACT_EMAIL };
   },
 
   async login(password) {
@@ -199,11 +214,15 @@ const mock = {
     const orders = readLS(LS.orders, []);
     const carts = readLS(LS.carts, []);
     const products = readLS(LS.products, []);
+    const subs = readLS(LS.subscribers, []);
+    const msgs = readLS(LS.messages, []);
     return { stats: {
       revenue: orders.filter(o => o.status !== 'refunded').reduce((s, o) => s + o.total, 0),
       orders: orders.length,
       carts: carts.filter(c => c.status === 'open').length,
       products: products.length,
+      subscribers: subs.length,
+      newMessages: msgs.filter(m => m.status === 'new').length,
     }};
   },
 
@@ -252,6 +271,29 @@ const mock = {
     writeLS(LS.orders, orders);
     return { ok: true };
   },
+
+  async subscribers() {
+    return { subscribers: readLS(LS.subscribers, []) };
+  },
+  async deleteSubscriber(id) {
+    writeLS(LS.subscribers, readLS(LS.subscribers, []).filter(s => s.id !== id));
+    return { ok: true };
+  },
+  async messages() {
+    return { messages: readLS(LS.messages, []) };
+  },
+  async updateMessage(id, status) {
+    const msgs = readLS(LS.messages, []);
+    const m = msgs.find(x => x.id === id);
+    if (!m) throw new Error('Message not found');
+    m.status = status;
+    writeLS(LS.messages, msgs);
+    return { ok: true };
+  },
+  async deleteMessage(id) {
+    writeLS(LS.messages, readLS(LS.messages, []).filter(m => m.id !== id));
+    return { ok: true };
+  },
 };
 
 export const api = {
@@ -289,6 +331,14 @@ export const api = {
       ? real('/track?number=' + encodeURIComponent(number) + '&email=' + encodeURIComponent(email))
       : mock.trackOrder(number, email);
   },
+  async subscribe(body) {
+    const mode = await detectMode();
+    return mode === 'real' ? real('/subscribe', { method:'POST', body }) : mock.subscribe(body);
+  },
+  async contact(body) {
+    const mode = await detectMode();
+    return mode === 'real' ? real('/contact', { method:'POST', body }) : mock.contact(body);
+  },
   async login(password) {
     const mode = await detectMode();
     return mode === 'real' ? real('/admin/login', { method:'POST', body:{ password } }) : mock.login(password);
@@ -314,6 +364,32 @@ export const api = {
     return mode === 'real'
       ? real('/orders/' + encodeURIComponent(id), { method:'PATCH', auth:true, body: patch })
       : mock.updateOrder(id, patch);
+  },
+  async subscribers() {
+    const mode = await detectMode();
+    return mode === 'real' ? real('/admin/subscribers', { auth:true }) : mock.subscribers();
+  },
+  async deleteSubscriber(id) {
+    const mode = await detectMode();
+    return mode === 'real'
+      ? real('/admin/subscribers/' + encodeURIComponent(id), { method:'DELETE', auth:true })
+      : mock.deleteSubscriber(id);
+  },
+  async messages() {
+    const mode = await detectMode();
+    return mode === 'real' ? real('/admin/messages', { auth:true }) : mock.messages();
+  },
+  async updateMessage(id, status) {
+    const mode = await detectMode();
+    return mode === 'real'
+      ? real('/admin/messages/' + encodeURIComponent(id), { method:'PATCH', auth:true, body:{ status } })
+      : mock.updateMessage(id, status);
+  },
+  async deleteMessage(id) {
+    const mode = await detectMode();
+    return mode === 'real'
+      ? real('/admin/messages/' + encodeURIComponent(id), { method:'DELETE', auth:true })
+      : mock.deleteMessage(id);
   },
   mode() { return MODE; },
 };
