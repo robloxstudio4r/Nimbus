@@ -1,8 +1,9 @@
 import { store } from './store.js';
 import { api } from './api.js';
 import { CONFIG } from './config.js';
-import { $, $$, money, esc, fmtDate, initials, toast } from './utils.js';
+import { $, $$, money, esc, fmtDate, toast } from './utils.js';
 import { loadProducts } from './shop.js';
+import { invalidateAboutCache } from './about.js';
 
 const SHIPPING_STATUSES = [
   ['processing',       'Processing'],
@@ -33,6 +34,7 @@ export function renderAdmin() {
           ['orders',      'Orders',      '✎'],
           ['subscribers', 'Subscribers', '✉'],
           ['messages',    'Messages',    '✎'],
+          ['about',       'About page',  '✎'],
         ].map(([k, l, ic]) =>
           `<button class="navbtn ${store.adminTab === k ? 'active' : ''}" data-tab="${k}"><span>${ic}</span>${l}</button>`).join('')}
         <button class="navbtn danger" data-logout><span>←</span>Sign out</button>
@@ -73,6 +75,7 @@ function renderLogin(view) {
 export function adminLogout() {
   store.token = null;
   store.currentOrderId = null;
+  store.currentMessageId = null;
   sessionStorage.removeItem(CONFIG.STORAGE.adminToken);
   renderAdmin();
 }
@@ -280,12 +283,105 @@ export async function renderAdminMain() {
         </div>`;
       return;
     }
+
+    if (store.adminTab === 'about') {
+      const { about, isDefault } = await api.about();
+      const v = about.values || [];
+
+      main.innerHTML = `
+        <div class="section-head" style="margin-bottom:24px">
+          <div>
+            <h2 style="font-size:26px">About page</h2>
+            <p>Edit what visitors see at <a href="#/about" target="_blank" style="color:var(--brand);font-weight:600">/#/about</a>.
+              ${isDefault ? '<span style="color:var(--brand);font-weight:600"> Currently using the default content.</span>' : ''}</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn outline sm" data-about-reset>Reset to defaults</button>
+            <a class="btn outline sm" href="#/about" target="_blank" style="text-decoration:none">Preview →</a>
+          </div>
+        </div>
+
+        <form id="aboutForm">
+          <div class="panel">
+            <h3>Hero</h3>
+            <p class="panel-sub">The headline area at the top of the About page.</p>
+            <div class="field">
+              <label>Title</label>
+              <input name="title" value="${esc(about.title || '')}" required placeholder="Small friends, made to last.">
+            </div>
+            <div class="field">
+              <label>Subtitle</label>
+              <input name="subtitle" value="${esc(about.subtitle || '')}" placeholder="A short one-line introduction.">
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Story</h3>
+            <p class="panel-sub">The main body text. Use a blank line between paragraphs.</p>
+            <div class="field">
+              <textarea name="story" rows="14" style="font-family:inherit;line-height:1.65" placeholder="Write your story here…">${esc(about.story || '')}</textarea>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Values</h3>
+            <p class="panel-sub">Three cards shown below the story. Leave a card blank to hide it.</p>
+            ${[0, 1, 2].map(i => `
+              <div class="about-value-editor">
+                <div class="about-value-num">${String(i + 1).padStart(2, '0')}</div>
+                <div style="flex:1">
+                  <div class="field" style="margin-top:0">
+                    <label>Title</label>
+                    <input name="v${i}_title" value="${esc(v[i]?.title || '')}" placeholder="Made with care">
+                  </div>
+                  <div class="field">
+                    <label>Description</label>
+                    <textarea name="v${i}_body" rows="2" style="font-family:inherit">${esc(v[i]?.body || '')}</textarea>
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>
+
+          <div style="position:sticky;bottom:0;background:var(--bg);padding:16px 0;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;margin-top:-1px">
+            <button type="button" class="btn outline" data-about-reset>Reset fields</button>
+            <button type="submit" class="btn brand">Save changes</button>
+          </div>
+        </form>`;
+
+      // Reset button — repopulates form with defaults
+      $$('[data-about-reset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!confirm('Reset the About page to the default content?')) return;
+          const d = {
+            title: 'Small friends, made to last.',
+            subtitle: "We're a tiny team based in Texas, obsessed with making everyday essentials you'll actually keep.",
+            story: "Nimbus started in a garage in 2022 with one simple idea: make things well, charge fairly, and stand behind them.\n\nWe work with a handful of small mills and family-run workshops — the kind of partners whose names we know and whose hands we trust. Every piece is designed in-house, tested for months, and made in small batches so nothing sits on a shelf.\n\nWe don't chase trends. We chase the kind of objects you reach for every day, wash a hundred times, and still love a year later. If something isn't right, we fix it. That's the whole promise.",
+            values: [
+              { title: 'Made with care', body: 'Designed in-house and produced in small batches by partners we know by name.' },
+              { title: 'Built to last',    body: "We choose materials for longevity, not margin. Wash it a hundred times — it should still feel new." },
+              { title: 'Here for you',     body: "Real humans answer every message. If something's wrong, we'll make it right." },
+            ],
+          };
+          const form = $('#aboutForm');
+          form.title.value = d.title;
+          form.subtitle.value = d.subtitle;
+          form.story.value = d.story;
+          for (let i = 0; i < 3; i++) {
+            form[`v${i}_title`].value = d.values[i].title;
+            form[`v${i}_body`].value  = d.values[i].body;
+          }
+        });
+      });
+
+      return;
+    }
   } catch (err) {
     if (err.status === 401) { adminLogout(); return toast('Session expired', 'warn'); }
     main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
   }
 }
 
+/* ---------- product ---------- */
 async function addProduct(e) {
   e.preventDefault();
   const fd = new FormData(e.target);
@@ -318,6 +414,7 @@ async function deleteProduct(id) {
   } catch (err) { toast(err.message, 'error'); }
 }
 
+/* ---------- order detail ---------- */
 async function renderOrderDetail(id) {
   const main = $('#adminMain');
   main.innerHTML = `<div class="empty">Loading order…</div>`;
@@ -342,8 +439,10 @@ async function renderOrderDetail(id) {
             <table class="tbl">
               <tbody>
                 ${o.items.map(i => `
-                  <tr><td><b>${esc(i.name)}</b><div class="sub">${money(i.price)} × ${i.qty}</div></td>
-                    <td class="right"><b>${money(i.price * i.qty)}</b></td></tr>`).join('')}
+                  <tr>
+                    <td><b>${esc(i.name)}</b><div class="sub">${money(i.price)} × ${i.qty}</div></td>
+                    <td class="right"><b>${money(i.price * i.qty)}</b></td>
+                  </tr>`).join('')}
               </tbody>
             </table>
             <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
@@ -354,7 +453,7 @@ async function renderOrderDetail(id) {
             </div>
           </div>
 
-          <div class="panel" id="shipPanel">
+          <div class="panel">
             <h3>Shipping & fulfillment</h3>
             <p class="panel-sub">Update the status — the customer sees this on the track page instantly.</p>
 
@@ -426,6 +525,7 @@ async function renderOrderDetail(id) {
   }
 }
 
+/* ---------- message detail ---------- */
 async function renderMessageDetail(id) {
   const main = $('#adminMain');
   main.innerHTML = `<div class="empty">Loading message…</div>`;
@@ -434,7 +534,6 @@ async function renderMessageDetail(id) {
     const m = messages.find(x => x.id === id);
     if (!m) throw new Error('Message not found');
 
-    // auto-mark as read when opened
     if (m.status === 'new') {
       await api.updateMessage(id, 'read').catch(() => {});
       m.status = 'read';
@@ -499,6 +598,39 @@ async function quickShip(status) {
   } catch (err) { toast(err.message, 'error'); }
 }
 
+async function saveAbout(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = form.querySelector('button[type=submit]');
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = 'Saving…';
+
+  try {
+    const values = [0, 1, 2]
+      .map(i => ({
+        title: form[`v${i}_title`]?.value.trim() || '',
+        body:  form[`v${i}_body`]?.value.trim()  || '',
+      }))
+      .filter(v => v.title || v.body);
+
+    await api.updateAbout({
+      title:    form.title.value.trim(),
+      subtitle: form.subtitle.value.trim(),
+      story:    form.story.value.trim(),
+      values,
+    });
+
+    invalidateAboutCache();
+    toast('About page saved');
+    renderAdminMain();
+  } catch (err) {
+    toast(err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
 export const adminActions = {
   async setTab(tab) {
     store.adminTab = tab;
@@ -511,6 +643,7 @@ export const adminActions = {
   backToOrders() { store.currentOrderId = null; renderAdminMain(); },
   deleteProduct,
   quickShip,
+  saveAbout,
 
   async deleteSubscriber(id) {
     if (!confirm('Remove this subscriber?')) return;
@@ -522,6 +655,7 @@ export const adminActions = {
   },
 
   viewMessage(id) { store.currentMessageId = id; renderMessageDetail(id); },
+  backToMessages() { store.currentMessageId = null; renderAdminMain(); },
 
   async updateMessageStatus(id, status) {
     try {
@@ -540,6 +674,8 @@ export const adminActions = {
       renderAdminMain();
     } catch (err) { toast(err.message, 'error'); }
   },
+
+  resetAboutDraft() { /* handled inline in the form */ },
 
   refund(id) {
     if (confirm('Refund this order?')) {
