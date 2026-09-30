@@ -4,6 +4,18 @@ import { CONFIG } from './config.js';
 import { $, $$, money, esc, fmtDate, toast } from './utils.js';
 import { loadProducts } from './shop.js';
 
+const SHIPPING_STATUSES = [
+  ['processing',       'Processing'],
+  ['packed',           'Packed'],
+  ['shipped',          'Shipped'],
+  ['in_transit',       'In transit'],
+  ['out_for_delivery', 'Out for delivery'],
+  ['delivered',        'Delivered'],
+  ['cancelled',        'Cancelled'],
+];
+
+const CARRIERS = ['USPS', 'UPS', 'FedEx', 'DHL', 'Royal Mail', 'Canada Post', 'Australia Post', 'Other'];
+
 export function renderAdmin() {
   const view = $('#view-admin');
   $('#siteFooter').hidden = true;
@@ -15,11 +27,11 @@ export function renderAdmin() {
       <aside class="admin-side">
         <div class="admin-title">DASHBOARD</div>
         ${[
-          ['overview','Overview','▦'],
-          ['products','Products','◫'],
-          ['carts','Live carts','⛁'],
-          ['orders','Orders','✎'],
-        ].map(([k,l,ic]) =>
+          ['overview', 'Overview', '▦'],
+          ['products', 'Products', '◫'],
+          ['carts',    'Live carts', '⛁'],
+          ['orders',   'Orders', '✎'],
+        ].map(([k, l, ic]) =>
           `<button class="navbtn ${store.adminTab === k ? 'active' : ''}" data-tab="${k}"><span>${ic}</span>${l}</button>`).join('')}
         <button class="navbtn danger" data-logout><span>←</span>Sign out</button>
       </aside>
@@ -88,13 +100,13 @@ export async function renderAdminMain() {
           <p class="panel-sub">The latest purchases across your store.</p>
           ${orders.length ? `
             <table class="tbl">
-              <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="right">Total</th></tr></thead>
+              <thead><tr><th>Order</th><th>Customer</th><th>Shipping</th><th class="right">Total</th></tr></thead>
               <tbody>
                 ${orders.slice(0, 8).map(o => `
                   <tr class="clickable" data-order="${esc(o.id)}">
                     <td><b>${esc(o.number)}</b><div class="sub">${fmtDate(o.created_at)}</div></td>
                     <td>${esc(o.customer_name)}<div class="sub">${esc(o.customer_email)}</div></td>
-                    <td><span class="pill ${esc(o.status)}">${esc(o.status)}</span></td>
+                    <td><span class="pill ${esc(o.shipping_status || 'processing')}">${esc((o.shipping_status || 'processing').replace(/_/g, ' '))}</span></td>
                     <td class="right"><b>${money(o.total)}</b></td>
                   </tr>`).join('')}
               </tbody>
@@ -183,16 +195,17 @@ export async function renderAdminMain() {
         </div>
         <div class="panel">
           <h3>${orders.length} order${orders.length === 1 ? '' : 's'}</h3>
-          <p class="panel-sub">Click any order to see full details and take action.</p>
+          <p class="panel-sub">Click any order to see full details and manage shipping.</p>
           ${orders.length ? `
             <table class="tbl">
-              <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Status</th><th class="right">Total</th></tr></thead>
+              <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Shipping</th><th>Payment</th><th class="right">Total</th></tr></thead>
               <tbody>
                 ${orders.map(o => `
                   <tr class="clickable" data-order="${esc(o.id)}">
                     <td><b>${esc(o.number)}</b><div class="sub">${fmtDate(o.created_at)}</div></td>
                     <td>${esc(o.customer_name)}<div class="sub">${esc(o.customer_email)}</div></td>
                     <td>${o.item_count}</td>
+                    <td><span class="pill ${esc(o.shipping_status || 'processing')}">${esc((o.shipping_status || 'processing').replace(/_/g, ' '))}</span></td>
                     <td><span class="pill ${esc(o.status)}">${esc(o.status)}</span></td>
                     <td class="right"><b>${money(o.total)}</b></td>
                   </tr>`).join('')}
@@ -244,11 +257,11 @@ async function renderOrderDetail(id) {
   main.innerHTML = `<div class="empty">Loading order…</div>`;
   try {
     const { order: o } = await api.order(id);
+
     main.innerHTML = `
       <div class="od-top">
         <button class="btn ghost sm" data-back-orders>← Back to orders</button>
         <div style="flex:1"></div>
-        ${o.status !== 'fulfilled' ? `<button class="btn sm" data-fulfill="${esc(o.id)}">Mark fulfilled</button>` : ''}
         ${o.status !== 'refunded' ? `<button class="btn danger sm" data-refund="${esc(o.id)}">Refund</button>` : ''}
       </div>
 
@@ -263,8 +276,10 @@ async function renderOrderDetail(id) {
             <table class="tbl">
               <tbody>
                 ${o.items.map(i => `
-                  <tr><td><b>${esc(i.name)}</b><div class="sub">${money(i.price)} × ${i.qty}</div></td>
-                    <td class="right"><b>${money(i.price * i.qty)}</b></td></tr>`).join('')}
+                  <tr>
+                    <td><b>${esc(i.name)}</b><div class="sub">${money(i.price)} × ${i.qty}</div></td>
+                    <td class="right"><b>${money(i.price * i.qty)}</b></td>
+                  </tr>`).join('')}
               </tbody>
             </table>
             <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
@@ -274,16 +289,56 @@ async function renderOrderDetail(id) {
               <div class="sumrow total"><span>Total</span><span>${money(o.total)}</span></div>
             </div>
           </div>
-          <div class="panel">
-            <h3>Timeline</h3>
-            <ul class="timeline">
-              <li><b>Payment succeeded</b><span>${fmtDate(o.created_at)}</span></li>
-              <li><b>Order created</b><span>${fmtDate(o.created_at)}</span></li>
-              ${o.status === 'fulfilled' ? `<li><b>Marked as fulfilled</b><span>Completed</span></li>` : ''}
-              ${o.status === 'refunded' ? `<li><b>Refund issued</b><span>Full refund</span></li>` : ''}
-            </ul>
+
+          <div class="panel" id="shipPanel">
+            <h3>Shipping & fulfillment</h3>
+            <p class="panel-sub">Update the status — the customer sees this on the track page instantly.</p>
+
+            <div class="ship-quick">
+              <button class="btn sm outline" data-quick-ship="packed">Mark packed</button>
+              <button class="btn sm outline" data-quick-ship="shipped">Mark shipped</button>
+              <button class="btn sm outline" data-quick-ship="in_transit">In transit</button>
+              <button class="btn sm outline" data-quick-ship="out_for_delivery">Out for delivery</button>
+              <button class="btn sm" data-quick-ship="delivered">Delivered</button>
+            </div>
+
+            <form id="shipForm">
+              <div class="row2">
+                <div class="field">
+                  <label>Shipping status</label>
+                  <select name="shipping_status">
+                    ${SHIPPING_STATUSES.map(([v, l]) =>
+                      `<option value="${v}" ${o.shipping_status === v ? 'selected' : ''}>${l}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Carrier</label>
+                  <select name="carrier">
+                    <option value="">— None —</option>
+                    ${CARRIERS.map(c =>
+                      `<option value="${c}" ${o.carrier === c ? 'selected' : ''}>${c}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+              <div class="row2">
+                <div class="field">
+                  <label>Tracking number</label>
+                  <input name="tracking_number" value="${esc(o.tracking_number || '')}" placeholder="1Z999AA10123456784" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label>Estimated delivery</label>
+                  <input name="estimated_delivery" type="date" value="${esc(o.estimated_delivery || '')}">
+                </div>
+              </div>
+              <div class="field">
+                <label>Note for the customer (optional)</label>
+                <textarea name="shipping_notes" rows="2" placeholder="Delayed by weather — new ETA Friday.">${esc(o.shipping_notes || '')}</textarea>
+              </div>
+              <button class="btn brand" type="submit" style="margin-top:18px">Save shipping info</button>
+            </form>
           </div>
         </div>
+
         <div>
           <div class="panel"><h3>Customer</h3>
             <div style="margin-top:4px">
@@ -298,18 +353,46 @@ async function renderOrderDetail(id) {
           <div class="panel"><h3>Ship to</h3>
             <div class="muted" style="white-space:pre-line;font-size:13.5px">${esc(o.shipping_address)}</div>
           </div>
+          <div class="panel"><h3>Customer track link</h3>
+            <p class="muted small" style="margin:0 0 8px">Send this to your customer so they can follow their order.</p>
+            <code style="font-size:12px;word-break:break-all;color:var(--ink-2)">/#/track</code>
+          </div>
         </div>
       </div>`;
+
+    $('#shipForm').addEventListener('submit', saveShipping);
   } catch (err) {
     main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
   }
 }
 
-async function updateOrderStatus(id, status) {
+async function saveShipping(e) {
+  e.preventDefault();
+  const form = e.target;
+  const btn = form.querySelector('button[type=submit]');
+  const fd = new FormData(form);
+  btn.disabled = true; btn.textContent = 'Saving…';
   try {
-    await api.updateOrder(id, status);
-    toast('Order ' + status);
-    renderOrderDetail(id);
+    await api.updateOrder(store.currentOrderId, {
+      shipping_status:    fd.get('shipping_status'),
+      carrier:            fd.get('carrier'),
+      tracking_number:    fd.get('tracking_number'),
+      estimated_delivery: fd.get('estimated_delivery'),
+      shipping_notes:     fd.get('shipping_notes'),
+    });
+    toast('Shipping updated');
+    renderOrderDetail(store.currentOrderId);
+  } catch (err) {
+    toast(err.message, 'error');
+    btn.disabled = false; btn.textContent = 'Save shipping info';
+  }
+}
+
+async function quickShip(status) {
+  try {
+    await api.updateOrder(store.currentOrderId, { shipping_status: status });
+    toast('Marked: ' + status.replace(/_/g, ' '));
+    renderOrderDetail(store.currentOrderId);
   } catch (err) { toast(err.message, 'error'); }
 }
 
@@ -323,6 +406,13 @@ export const adminActions = {
   openOrder(id) { store.currentOrderId = id; renderOrderDetail(id); },
   backToOrders() { store.currentOrderId = null; renderAdminMain(); },
   deleteProduct,
-  fulfill(id) { return updateOrderStatus(id, 'fulfilled'); },
-  refund(id) { if (confirm('Refund this order?')) return updateOrderStatus(id, 'refunded'); },
+  quickShip,
+  refund(id) {
+    if (confirm('Refund this order?')) {
+      api.updateOrder(id, { status: 'refunded' }).then(() => {
+        toast('Refunded');
+        renderOrderDetail(id);
+      });
+    }
+  },
 };
