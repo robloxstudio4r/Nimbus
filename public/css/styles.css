@@ -34,11 +34,11 @@ a{color:inherit;text-decoration:none}
 .right{text-align:right}
 .serif{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.02em}
 
-/* announcement */
+/* ============ announcement ============ */
 .announce{background:var(--ink);color:var(--bg);text-align:center;padding:9px 16px;font-size:12.5px;letter-spacing:.02em}
 .announce b{color:var(--brand)}
 
-/* header */
+/* ============ header ============ */
 .header{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .header-inner{max-width:1280px;margin:0 auto;padding:14px 24px;display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}
 .brand{font-family:'Fraunces',serif;font-size:22px;font-weight:700;letter-spacing:-.03em;cursor:pointer}
@@ -67,13 +67,14 @@ a{color:inherit;text-decoration:none}
 .cart-btn:hover{opacity:.9}
 .cart-btn .count{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
 
+/* ============ layout ============ */
 main{max-width:1280px;margin:0 auto;padding:0 24px}
 .section{padding:0 0 80px}
 .section-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;gap:24px;flex-wrap:wrap}
 .section-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,3.2vw,38px);letter-spacing:-.03em;margin:0;line-height:1.05}
 .section-head p{margin:8px 0 0;color:var(--muted);font-size:14.5px;max-width:500px}
 
-/* hero */
+/* ============ hero ============ */
 .hero{padding:72px 0 60px;display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center}
 .hero-copy .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);margin-bottom:20px}
 .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--good)}
@@ -92,7 +93,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .badge-float.br{bottom:24px;right:24px}
 .badge-float .ic{width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-size:16px}
 
-/* trust */
+/* ============ trust bar ============ */
 .trust{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -24px 64px;padding:0 24px}
 .trust .t{display:flex;align-items:center;gap:12px;padding:22px 20px;border-right:1px solid var(--line)}
 .trust .t:last-child{border-right:0}
@@ -100,7 +101,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .trust .t b{display:block;font-size:13.5px;font-weight:700}
 .trust .t span{font-size:12px;color:var(--muted)}
 
-/* toolbar / filters */
+/* ============ filters / sort ============ */
 .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .filters{display:flex;gap:6px;flex-wrap:wrap}
 .filter{padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:13.5px;font-weight:500;transition:all .15s ease}
@@ -109,7 +110,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .sort-select{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font-size:13.5px;font-weight:500;cursor:pointer;outline:none}
 .sort-select:hover{border-color:var(--line-2)}
 
-/* grid / cards */
+/* ============ product grid ============ */
 .grid{display:grid;gap:28px 22px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 .card{background:transparent;border:0;padding:0;display:flex;flex-direction:column;position:relative;transition:transform .25s cubic-bezier(.4,0,.2,1)}
 .card:hover{transform:translateY(-4px)}
@@ -138,7 +139,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .stock-badge.low{color:var(--brand)}
 .stock-badge.out{color:var(--bad)}
 
-/* testimonials */
+/* ============ testimonials ============ */
 .testi-section{background:var(--surface);border-radius:24px;padding:64px 48px;margin-bottom:80px;border:1px solid var(--line)}
 .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:40px}
 .testi{display:flex;flex-direction:column;gap:14px}
@@ -149,7 +150,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .testi .who span{font-size:12px;color:var(--muted)}
 .testi .stars{font-size:15px;margin-bottom:2px}
 
-/* recent */
+/* ============ recently viewed ============ */
 .recent{padding:0 0 80px}
 .recent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}
 .recent-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;transition:transform .2s ease,border-color .15s ease}
@@ -158,7 +159,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .recent-card b{font-size:13.5px;display:block;margin-bottom:4px}
 .recent-card .price{font-size:13.5px}
 
-/* newsletter */
+/* ============ newsletter ============ */
 .newsletter{background:var(--ink);color:var(--bg);border-radius:24px;padding:72px 48px;text-align:center;margin-bottom:80px;position:relative;overflow:hidden}
 .newsletter::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 0%,rgba(201,106,63,.35),transparent 45%),radial-gradient(circle at 85% 100%,rgba(201,106,63,.2),transparent 45%)}
 .newsletter > *{position:relative;z-index:1}
@@ -170,7 +171,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .news-form button{background:var(--brand);color:#fff;border:0;padding:11px 22px;border-radius:999px;font-weight:600;font-size:14px;cursor:pointer;transition:background .15s ease;white-space:nowrap}
 .news-form button:hover{background:var(--brand-2)}
 
-/* footer */
+/* ============ footer ============ */
 .footer{border-top:1px solid var(--line);padding:56px 0 32px}
 .footer-inner{max-width:1280px;margin:0 auto;padding:0 24px}
 .footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
@@ -181,8 +182,8 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .footer .brand-blurb{max-width:280px;color:var(--muted);font-size:14px;line-height:1.6;margin:12px 0 0}
 .footer-bottom{border-top:1px solid var(--line);padding-top:24px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 
-/* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:var(--bg);border:0;padding:13px 24px;border-radius:999px;cursor:pointer;font-weight:600;font-size:14.5px;letter-spacing:-.005em;transition:opacity .15s ease,transform .06s ease}
+/* ============ buttons ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:var(--bg);border:0;padding:13px 24px;border-radius:999px;cursor:pointer;font-weight:600;font-size:14.5px;letter-spacing:-.005em;transition:opacity .15s ease,transform .06s ease;text-decoration:none}
 .btn:hover{opacity:.9}
 .btn:active{transform:translateY(1px)}
 .btn.outline{background:transparent;color:var(--ink);border:1px solid var(--line-2)}
@@ -195,7 +196,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .btn.danger:hover{background:color-mix(in srgb,var(--bad) 10%,transparent);opacity:1}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* cart drawer */
+/* ============ cart drawer ============ */
 .drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,94vw);z-index:60;background:var(--surface);border-left:1px solid var(--line);transform:translateX(102%);transition:transform .34s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-20px 0 60px -20px rgba(0,0,0,.18)}
 .drawer.open{transform:none}
 .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:22px 24px;border-bottom:1px solid var(--line)}
@@ -235,7 +236,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .trust-mini{display:flex;justify-content:center;gap:16px;margin-top:14px;font-size:11.5px;color:var(--muted)}
 .trust-mini span{display:flex;align-items:center;gap:5px}
 
-/* overlay / modal */
+/* ============ overlay / modal ============ */
 .overlay{position:fixed;inset:0;z-index:80;background:rgba(20,18,12,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes pop{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
@@ -247,7 +248,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .field{display:flex;flex-direction:column;gap:7px;margin-top:16px}
 .field label{font-size:12.5px;color:var(--ink-2);font-weight:600}
 .field input,.field select,.field textarea{background:var(--surface);border:1px solid var(--line-2);border-radius:11px;padding:12px 14px;outline:none;font-size:14.5px;transition:border-color .15s ease,box-shadow .15s ease;font-family:inherit}
-.field textarea{resize:vertical;min-height:120px}
+.field textarea{resize:vertical;min-height:120px;line-height:1.55}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 8%,transparent)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cardbox{border:1px solid var(--line);border-radius:14px;padding:6px 16px 16px;margin-top:20px;background:var(--surface-2)}
@@ -255,7 +256,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .cardbox .field input{background:var(--surface)}
 .card-brand{font-size:10.5px;letter-spacing:.1em;color:var(--muted);font-weight:800;padding:3px 8px;background:var(--surface);border-radius:5px;border:1px solid var(--line)}
 
-/* quick view */
+/* ============ quick view ============ */
 .qv{display:grid;grid-template-columns:1fr 1fr;gap:0}
 .qv-img{background:linear-gradient(135deg,#ede7dc,#d9cfba);display:grid;place-items:center;font-family:'Fraunces',serif;font-size:80px;font-weight:700;color:#a89275;min-height:420px;overflow:hidden}
 [data-theme="dark"] .qv-img{background:linear-gradient(135deg,#2a2620,#3a342c);color:#5a5245}
@@ -266,13 +267,13 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .qv-body .desc{color:var(--ink-2);font-size:14.5px;line-height:1.65;margin:0}
 .qv-body .actions{display:flex;gap:10px;margin-top:auto;padding-top:20px}
 
-/* success */
+/* ============ success ============ */
 .success-icon{width:68px;height:68px;margin:0 auto 20px;border-radius:50%;background:linear-gradient(135deg,#e6f4ea,#c8ebd6);display:grid;place-items:center;font-size:32px;color:var(--good)}
 .receipt{background:var(--surface-2);border-radius:14px;padding:20px;margin:20px 0;border:1px solid var(--line)}
 .receipt .rrow{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:9px}
 .receipt .rrow:last-child{border-top:1px solid var(--line-2);padding-top:12px;margin-top:6px;font-size:15px;font-weight:700}
 
-/* admin */
+/* ============ admin ============ */
 .admin-wrap{display:grid;grid-template-columns:220px 1fr;gap:32px;padding:32px 0 80px}
 .admin-side{position:sticky;top:90px;height:fit-content;display:flex;flex-direction:column;gap:4px}
 .admin-side .admin-title{font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:800;padding:0 12px 12px}
@@ -327,7 +328,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .cart-card .ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:14px}
 .cart-card .ch b{font-size:13px;font-family:ui-monospace,monospace}
 
-/* order detail */
+/* ============ order detail ============ */
 .od-top{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:24px}
 .od-amt{font-family:'Fraunces',serif;font-size:42px;font-weight:600;letter-spacing:-.035em;display:flex;align-items:center;gap:14px}
 .od-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;align-items:start}
@@ -337,13 +338,13 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .timeline li b{font-size:13.5px;font-weight:600}
 .timeline li span{font-size:12px;color:var(--muted)}
 
-/* shipping panel in admin */
+/* ============ shipping panel in admin ============ */
 .ship-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
 .ship-quick .btn{padding:7px 13px;font-size:12.5px}
 .ship-quick .btn:not(.outline){background:var(--brand);color:#fff}
 .ship-quick .btn:not(.outline):hover{background:var(--brand-2)}
 
-/* track page */
+/* ============ track page ============ */
 .track-page{max-width:720px;margin:0 auto;padding:60px 0 80px}
 .track-hero{text-align:center;margin-bottom:40px}
 .track-hero h1{font-size:clamp(32px,4vw,44px);margin:0 0 10px;letter-spacing:-.03em}
@@ -378,7 +379,7 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .track-error h3{margin:0 0 6px;font-family:'Fraunces',serif;font-size:22px}
 .track-cancelled{background:#fdeaea;color:#c0392b;border-radius:14px;padding:16px 18px;font-size:14px;font-weight:600}
 
-/* contact page */
+/* ============ contact page ============ */
 .contact-page{max-width:1100px;margin:0 auto;padding:60px 0 80px}
 .contact-hero{text-align:center;margin-bottom:56px}
 .contact-hero h1{font-size:clamp(32px,4vw,46px);margin:0 0 12px;letter-spacing:-.03em}
@@ -396,7 +397,39 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 .contact-success{max-width:560px;margin:60px auto;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:60px 40px;box-shadow:var(--shadow-sm)}
 .contact-success h1{font-size:32px;margin:0 0 8px;letter-spacing:-.03em}
 
-/* admin messages */
+/* ============ about page ============ */
+.about-page{max-width:960px;margin:0 auto;padding:80px 0 80px}
+.about-hero{text-align:center;margin-bottom:60px}
+.about-hero h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(36px,5vw,58px);line-height:1.05;letter-spacing:-.035em;margin:0 0 18px}
+.about-sub{color:var(--muted);font-size:18px;line-height:1.6;max-width:620px;margin:0 auto}
+.about-story{max-width:680px;margin:0 auto 80px;font-size:17px;line-height:1.75;color:var(--ink-2)}
+.about-story p{margin:0 0 22px}
+.about-story p:last-child{margin:0}
+.about-values{margin:80px 0}
+.about-values-head{text-align:center;margin-bottom:44px}
+.about-values-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,3.2vw,34px);letter-spacing:-.03em;margin:0 0 8px}
+.about-values-head p{margin:0;font-size:15px}
+.about-values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.about-value{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px 26px;box-shadow:var(--shadow-sm)}
+.about-value-num{font-family:'Fraunces',serif;font-size:32px;font-weight:600;color:var(--brand);letter-spacing:-.03em;line-height:1;margin-bottom:16px;opacity:.85}
+.about-value h3{margin:0 0 10px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.about-value p{margin:0;font-size:14.5px;line-height:1.65}
+.about-cta{margin-top:80px;background:var(--ink);color:var(--bg);border-radius:24px;padding:56px 48px;text-align:center;position:relative;overflow:hidden}
+.about-cta::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 0%,rgba(201,106,63,.35),transparent 45%),radial-gradient(circle at 85% 100%,rgba(201,106,63,.2),transparent 45%)}
+.about-cta-inner{position:relative;z-index:1}
+.about-cta h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,3vw,34px);letter-spacing:-.03em;margin:0 0 12px}
+.about-cta p{margin:0 0 24px;font-size:15.5px;color:color-mix(in srgb,var(--bg) 72%,transparent)}
+.about-cta-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.about-cta .btn.brand{background:var(--brand);color:#fff}
+.about-cta .btn.outline{background:transparent;color:var(--bg);border-color:rgba(255,255,255,.3)}
+.about-cta .btn.outline:hover{background:rgba(255,255,255,.1)}
+.about-loading{padding:80px 0}
+
+/* admin about editor */
+.about-value-editor{display:flex;gap:16px;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);margin-bottom:12px}
+.about-value-editor .about-value-num{font-size:22px;color:var(--brand);flex:none;padding-top:6px}
+
+/* ============ admin messages ============ */
 .msg-card{border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:12px;background:var(--surface);cursor:pointer;transition:background .15s ease,border-color .15s ease}
 .msg-card:hover{background:var(--surface-2);border-color:var(--line-2)}
 .msg-card.unread{border-left:3px solid var(--brand);background:color-mix(in srgb,var(--brand) 4%,var(--surface))}
@@ -416,14 +449,19 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
 [data-theme="dark"] .pill.msg-status-replied{background:rgba(31,122,74,.2);color:#5ee08f}
 [data-theme="dark"] .pill.msg-status-archived{background:rgba(138,147,171,.14);color:#a9b2c8}
 
-/* toast */
+/* ============ toast ============ */
 #toast{position:fixed;left:50%;bottom:32px;transform:translate(-50%,160%);z-index:200;background:var(--ink);color:var(--bg);padding:14px 22px;border-radius:999px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:10px}
 #toast.show{transform:translate(-50%,0)}
 
 .empty{padding:60px 24px;text-align:center;color:var(--muted);font-size:14.5px}
 .empty .big{font-size:40px;margin-bottom:12px}
 
-/* responsive */
+/* ============ skeleton ============ */
+.skeleton{border-radius:14px;background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface) 50%,var(--surface-2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-line{height:14px;border-radius:6px}
+
+/* ============ responsive ============ */
 @media (max-width:1100px){.search-wrap{width:180px}.search-wrap:focus-within{width:220px}}
 @media (max-width:960px){
   .hero{grid-template-columns:1fr;padding:40px 0;gap:36px}
@@ -445,8 +483,13 @@ main{max-width:1280px;margin:0 auto;padding:0 24px}
   .search-wrap{width:auto;flex:1}
   .search-wrap:focus-within{width:auto}
   .contact-grid{grid-template-columns:1fr}
+  .about-values-grid{grid-template-columns:1fr}
 }
-@media (max-width:700px){.track-form{grid-template-columns:1fr;padding:22px}}
+@media (max-width:700px){
+  .track-form{grid-template-columns:1fr;padding:22px}
+  .about-page{padding:60px 0}
+  .about-cta{padding:44px 28px}
+}
 @media (max-width:600px){
   .header-inner{padding:12px 16px;gap:12px;grid-template-columns:auto 1fr auto}
   .nav-main{display:none}
