@@ -1,7 +1,7 @@
 import { store } from './store.js';
 import { api } from './api.js';
 import { CONFIG } from './config.js';
-import { $, $$, money, esc, fmtDate, toast } from './utils.js';
+import { $, $$, money, esc, fmtDate, initials, toast } from './utils.js';
 import { loadProducts } from './shop.js';
 
 const SHIPPING_STATUSES = [
@@ -27,10 +27,12 @@ export function renderAdmin() {
       <aside class="admin-side">
         <div class="admin-title">DASHBOARD</div>
         ${[
-          ['overview', 'Overview', '▦'],
-          ['products', 'Products', '◫'],
-          ['carts',    'Live carts', '⛁'],
-          ['orders',   'Orders', '✎'],
+          ['overview',    'Overview',    '▦'],
+          ['products',    'Products',    '◫'],
+          ['carts',       'Live carts',  '⛁'],
+          ['orders',      'Orders',      '✎'],
+          ['subscribers', 'Subscribers', '✉'],
+          ['messages',    'Messages',    '✎'],
         ].map(([k, l, ic]) =>
           `<button class="navbtn ${store.adminTab === k ? 'active' : ''}" data-tab="${k}"><span>${ic}</span>${l}</button>`).join('')}
         <button class="navbtn danger" data-logout><span>←</span>Sign out</button>
@@ -79,6 +81,7 @@ export async function renderAdminMain() {
   const main = $('#adminMain');
   if (!main) return;
   if (store.currentOrderId) return renderOrderDetail(store.currentOrderId);
+  if (store.currentMessageId) return renderMessageDetail(store.currentMessageId);
 
   main.innerHTML = `<div class="empty">Loading…</div>`;
 
@@ -94,6 +97,8 @@ export async function renderAdminMain() {
           <div class="stat"><div class="k">Orders</div><div class="v">${stats.orders}</div><div class="delta">All time</div></div>
           <div class="stat"><div class="k">Open carts</div><div class="v">${stats.carts}</div><div class="delta">Live now</div></div>
           <div class="stat"><div class="k">Products</div><div class="v">${stats.products}</div><div class="delta">In catalog</div></div>
+          <div class="stat"><div class="k">Subscribers</div><div class="v">${stats.subscribers}</div><div class="delta">Newsletter list</div></div>
+          <div class="stat"><div class="k">New messages</div><div class="v">${stats.newMessages}</div><div class="delta">Unread</div></div>
         </div>
         <div class="panel">
           <h3>Recent orders</h3>
@@ -214,6 +219,67 @@ export async function renderAdminMain() {
         </div>`;
       return;
     }
+
+    if (store.adminTab === 'subscribers') {
+      const { subscribers } = await api.subscribers();
+      main.innerHTML = `
+        <div class="section-head" style="margin-bottom:24px">
+          <div><h2 style="font-size:26px">Newsletter subscribers</h2>
+            <p>${subscribers.length} ${subscribers.length === 1 ? 'person has' : 'people have'} signed up.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Mailing list</h3>
+          <p class="panel-sub">Everyone who opted in to marketing emails.</p>
+          ${subscribers.length ? `
+            <table class="tbl">
+              <thead><tr><th>Name</th><th>Email</th><th>Signed up</th><th></th></tr></thead>
+              <tbody>
+                ${subscribers.map(s => `
+                  <tr>
+                    <td><b>${esc(s.name || '—')}</b></td>
+                    <td><a href="mailto:${esc(s.email)}" style="color:var(--brand);font-weight:500">${esc(s.email)}</a></td>
+                    <td>${fmtDate(s.created_at)}</td>
+                    <td class="right"><button class="btn danger sm" data-del-subscriber="${esc(s.id)}">Remove</button></td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>` : `<div class="empty">No subscribers yet.</div>`}
+        </div>`;
+      return;
+    }
+
+    if (store.adminTab === 'messages') {
+      const { messages } = await api.messages();
+      const unread = messages.filter(m => m.status === 'new').length;
+      main.innerHTML = `
+        <div class="section-head" style="margin-bottom:24px">
+          <div><h2 style="font-size:26px">Messages</h2>
+            <p>${messages.length} total · <b style="color:var(--brand)">${unread} unread</b></p>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Inbox</h3>
+          <p class="panel-sub">Contact form submissions from your store.</p>
+          ${messages.length ? messages.map(m => `
+            <div class="msg-card ${m.status === 'new' ? 'unread' : ''}" data-view-message="${esc(m.id)}">
+              <div class="msg-head">
+                <div>
+                  <div class="msg-name">
+                    ${m.status === 'new' ? `<span class="msg-dot"></span>` : ''}
+                    ${esc(m.name)}
+                  </div>
+                  <div class="msg-meta">${esc(m.email)} · ${fmtDate(m.created_at)}</div>
+                </div>
+                <div style="text-align:right">
+                  <span class="pill msg-status-${esc(m.status)}">${esc(m.status)}</span>
+                  <div class="msg-subject">${esc(m.subject)}</div>
+                </div>
+              </div>
+              <p class="msg-preview">${esc(m.message.slice(0, 140))}${m.message.length > 140 ? '…' : ''}</p>
+            </div>`).join('') : `<div class="empty">No messages yet.</div>`}
+        </div>`;
+      return;
+    }
   } catch (err) {
     if (err.status === 401) { adminLogout(); return toast('Session expired', 'warn'); }
     main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
@@ -276,10 +342,8 @@ async function renderOrderDetail(id) {
             <table class="tbl">
               <tbody>
                 ${o.items.map(i => `
-                  <tr>
-                    <td><b>${esc(i.name)}</b><div class="sub">${money(i.price)} × ${i.qty}</div></td>
-                    <td class="right"><b>${money(i.price * i.qty)}</b></td>
-                  </tr>`).join('')}
+                  <tr><td><b>${esc(i.name)}</b><div class="sub">${money(i.price)} × ${i.qty}</div></td>
+                    <td class="right"><b>${money(i.price * i.qty)}</b></td></tr>`).join('')}
               </tbody>
             </table>
             <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
@@ -353,14 +417,53 @@ async function renderOrderDetail(id) {
           <div class="panel"><h3>Ship to</h3>
             <div class="muted" style="white-space:pre-line;font-size:13.5px">${esc(o.shipping_address)}</div>
           </div>
-          <div class="panel"><h3>Customer track link</h3>
-            <p class="muted small" style="margin:0 0 8px">Send this to your customer so they can follow their order.</p>
-            <code style="font-size:12px;word-break:break-all;color:var(--ink-2)">/#/track</code>
-          </div>
         </div>
       </div>`;
 
     $('#shipForm').addEventListener('submit', saveShipping);
+  } catch (err) {
+    main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
+  }
+}
+
+async function renderMessageDetail(id) {
+  const main = $('#adminMain');
+  main.innerHTML = `<div class="empty">Loading message…</div>`;
+  try {
+    const { messages } = await api.messages();
+    const m = messages.find(x => x.id === id);
+    if (!m) throw new Error('Message not found');
+
+    // auto-mark as read when opened
+    if (m.status === 'new') {
+      await api.updateMessage(id, 'read').catch(() => {});
+      m.status = 'read';
+    }
+
+    main.innerHTML = `
+      <div class="od-top">
+        <button class="btn ghost sm" data-back-messages>← Back to inbox</button>
+        <div style="flex:1"></div>
+        ${m.status !== 'replied' ? `<button class="btn sm" data-message-status="replied" data-msg-id="${esc(m.id)}">Mark replied</button>` : ''}
+        ${m.status !== 'archived' ? `<button class="btn outline sm" data-message-status="archived" data-msg-id="${esc(m.id)}">Archive</button>` : ''}
+        <button class="btn danger sm" data-del-message="${esc(m.id)}">Delete</button>
+      </div>
+
+      <div class="section-head" style="margin-bottom:16px">
+        <div>
+          <h2 style="font-size:26px">${esc(m.subject || 'No subject')}</h2>
+          <p>From <b>${esc(m.name)}</b> · <a href="mailto:${esc(m.email)}" style="color:var(--brand)">${esc(m.email)}</a> · ${fmtDate(m.created_at)}</p>
+        </div>
+        <span class="pill msg-status-${esc(m.status)}">${esc(m.status)}</span>
+      </div>
+
+      <div class="panel">
+        <div class="msg-body">${esc(m.message).replace(/\n/g, '<br>')}</div>
+        <div style="margin-top:22px;padding-top:20px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn brand" href="mailto:${esc(m.email)}?subject=Re: ${encodeURIComponent(m.subject || 'Your message')}">Reply by email →</a>
+          <a class="btn outline" href="mailto:${esc(CONFIG.CONTACT_EMAIL)}?subject=Forward: ${encodeURIComponent(m.subject || 'Message')}&body=${encodeURIComponent('--- Original message ---\nFrom: ' + m.name + ' <' + m.email + '>\n\n' + m.message)}">Forward to ${esc(CONFIG.CONTACT_EMAIL)}</a>
+        </div>
+      </div>`;
   } catch (err) {
     main.innerHTML = `<div class="panel"><div class="empty">${esc(err.message)}</div></div>`;
   }
@@ -400,13 +503,44 @@ export const adminActions = {
   async setTab(tab) {
     store.adminTab = tab;
     store.currentOrderId = null;
+    store.currentMessageId = null;
     $$('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     renderAdminMain();
   },
-  openOrder(id) { store.currentOrderId = id; renderOrderDetail(id); },
+  openOrder(id) { store.currentOrderId = id; store.currentMessageId = null; renderOrderDetail(id); },
   backToOrders() { store.currentOrderId = null; renderAdminMain(); },
   deleteProduct,
   quickShip,
+
+  async deleteSubscriber(id) {
+    if (!confirm('Remove this subscriber?')) return;
+    try {
+      await api.deleteSubscriber(id);
+      toast('Subscriber removed');
+      renderAdminMain();
+    } catch (err) { toast(err.message, 'error'); }
+  },
+
+  viewMessage(id) { store.currentMessageId = id; renderMessageDetail(id); },
+
+  async updateMessageStatus(id, status) {
+    try {
+      await api.updateMessage(id, status);
+      toast('Marked ' + status);
+      renderMessageDetail(id);
+    } catch (err) { toast(err.message, 'error'); }
+  },
+
+  async deleteMessage(id) {
+    if (!confirm('Delete this message?')) return;
+    try {
+      await api.deleteMessage(id);
+      toast('Message deleted');
+      store.currentMessageId = null;
+      renderAdminMain();
+    } catch (err) { toast(err.message, 'error'); }
+  },
+
   refund(id) {
     if (confirm('Refund this order?')) {
       api.updateOrder(id, { status: 'refunded' }).then(() => {
