@@ -52,8 +52,8 @@ function renderHero() {
     <section class="hero">
       <div class="hero-copy">
         <div class="eyebrow"><span class="dot"></span> New drop · SS26</div>
-        <h1>Everyday essentials,<br>made to <em>last</em>.</h1>
-        <p>Premium materials, small-batch production, and honest pricing. Everything you need — nothing you don't.</p>
+        <h1>Everyday Friends,<br>made to <em>last</em>.</h1>
+        <p>Premium Made, small Friends every 2 weeks, and honest pricing.</p>
         <div class="hero-cta">
           <button class="btn brand" data-scroll="#shop">Shop the collection →</button>
           <button class="btn outline" data-scroll="#testi">Read reviews</button>
