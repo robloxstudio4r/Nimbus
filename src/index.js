@@ -3,6 +3,17 @@
 const DEFAULT_ADMIN_PASSWORD = '06142014Aa@';
 const CONTACT_EMAIL = 'nimbusfriends@tuta.io';
 
+const DEFAULT_ABOUT = {
+  title: 'Small friends, made to last.',
+  subtitle: "We're a tiny team based in Texas, obsessed with making everyday essentials you'll actually keep.",
+  story: "Nimbus started in a garage in 2022 with one simple idea: make things well, charge fairly, and stand behind them.\n\nWe work with a handful of small mills and family-run workshops — the kind of partners whose names we know and whose hands we trust. Every piece is designed in-house, tested for months, and made in small batches so nothing sits on a shelf.\n\nWe don't chase trends. We chase the kind of objects you reach for every day, wash a hundred times, and still love a year later. If something isn't right, we fix it. That's the whole promise.",
+  values: [
+    { title: 'Made with care', body: 'Designed in-house and produced in small batches by partners we know by name.' },
+    { title: 'Built to last',    body: "We choose materials for longevity, not margin. Wash it a hundred times — it should still feel new." },
+    { title: 'Here for you',     body: "Real humans answer every message. If something's wrong, we'll make it right." },
+  ],
+};
+
 const json = (data, init = {}) =>
   new Response(JSON.stringify(data), {
     ...init,
@@ -203,7 +214,6 @@ async function handleApi(request, env, url) {
       });
     }
 
-    // Newsletter signup (public)
     if (path === '/subscribe' && method === 'POST') {
       const body = await request.json().catch(() => ({}));
       const name = String(body.name || '').trim().slice(0, 100);
@@ -222,7 +232,6 @@ async function handleApi(request, env, url) {
       return json({ ok: true, contactEmail: CONTACT_EMAIL });
     }
 
-    // Contact form (public)
     if (path === '/contact' && method === 'POST') {
       const body = await request.json().catch(() => ({}));
       const name = String(body.name || '').trim().slice(0, 100);
@@ -242,9 +251,20 @@ async function handleApi(request, env, url) {
       return json({ ok: true, id, contactEmail: CONTACT_EMAIL });
     }
 
-    // Public config — expose contact email
     if (path === '/config' && method === 'GET') {
       return json({ contactEmail: CONTACT_EMAIL });
+    }
+
+    // Public about content (falls back to default if not yet edited)
+    if (path === '/about' && method === 'GET') {
+      const row = await env.DB
+        .prepare("SELECT value FROM site_content WHERE key = 'about'").first();
+      if (!row) return json({ about: DEFAULT_ABOUT, isDefault: true });
+      try {
+        return json({ about: JSON.parse(row.value), isDefault: false });
+      } catch {
+        return json({ about: DEFAULT_ABOUT, isDefault: true });
+      }
     }
 
     if (path === '/admin/login' && method === 'POST') {
@@ -287,6 +307,37 @@ async function handleApi(request, env, url) {
     if (productMatch && method === 'DELETE') {
       await env.DB.prepare('DELETE FROM products WHERE id = ?').bind(productMatch[1]).run();
       return json({ ok: true });
+    }
+
+    // Save about content
+    if (path === '/admin/about' && method === 'PUT') {
+      const body = await request.json().catch(() => ({}));
+      const title    = String(body.title || '').slice(0, 200);
+      const subtitle = String(body.subtitle || '').slice(0, 500);
+      const story    = String(body.story || '').slice(0, 8000);
+      const values   = Array.isArray(body.values)
+        ? body.values.slice(0, 6).map(v => ({
+            title: String(v?.title || '').slice(0, 100),
+            body:  String(v?.body  || '').slice(0, 500),
+          }))
+        : [];
+
+      const about = { title, subtitle, story, values };
+      const now = Date.now();
+
+      const existing = await env.DB
+        .prepare("SELECT key FROM site_content WHERE key = 'about'").first();
+      if (existing) {
+        await env.DB
+          .prepare('UPDATE site_content SET value = ?, updated_at = ? WHERE key = ?')
+          .bind(JSON.stringify(about), now, 'about').run();
+      } else {
+        await env.DB
+          .prepare('INSERT INTO site_content (key, value, updated_at) VALUES (?, ?, ?)')
+          .bind('about', JSON.stringify(about), now).run();
+      }
+
+      return json({ ok: true, about });
     }
 
     if (path === '/admin/stats' && method === 'GET') {
@@ -383,8 +434,6 @@ async function handleApi(request, env, url) {
       return json({ ok: true });
     }
 
-    /* ---------- subscribers (admin) ---------- */
-
     if (path === '/admin/subscribers' && method === 'GET') {
       const { results } = await env.DB
         .prepare('SELECT * FROM subscribers ORDER BY created_at DESC').all();
@@ -396,8 +445,6 @@ async function handleApi(request, env, url) {
       await env.DB.prepare('DELETE FROM subscribers WHERE id = ?').bind(subMatch[1]).run();
       return json({ ok: true });
     }
-
-    /* ---------- messages (admin) ---------- */
 
     if (path === '/admin/messages' && method === 'GET') {
       const { results } = await env.DB
