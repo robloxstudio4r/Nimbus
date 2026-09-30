@@ -129,7 +129,13 @@ function showOrderSuccess(order) {
               <span>${money(i.price * i.qty)}</span></div>`).join('')}
           <div class="rrow"><span>Total paid</span><span>${money(order.total)}</span></div>
         </div>
-        <button class="btn" style="width:100%" data-close-modal>Continue shopping</button>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <button class="btn outline" style="flex:1" data-close-modal>Keep shopping</button>
+          <a class="btn brand" style="flex:1;text-decoration:none" href="#/track" data-close-modal>Track order →</a>
+        </div>
+        <p class="muted small" style="margin:0">
+          Save your order number <b style="color:var(--ink)">${esc(order.number)}</b> — you'll need it to track your order.
+        </p>
       </div>
     </div>`;
 }
