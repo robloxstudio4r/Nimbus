@@ -7,6 +7,7 @@ import { loadProducts, renderShop, openQuickView, closeModal } from './shop.js';
 import { openCheckout } from './checkout.js';
 import { renderAdmin, adminLogout, adminActions } from './admin.js';
 import { renderTrack, submitTrack } from './track.js';
+import { submitContact } from './contact.js';
 import { route } from './router.js';
 
 function applyTheme(mode) {
@@ -18,12 +19,12 @@ function applyTheme(mode) {
 document.addEventListener('click', async e => {
   const t = e.target;
 
-  // Navigation
   if (t.closest('[data-nav-home]') || t.closest('[data-nav-shop]')) {
     location.hash = '#/'; return;
   }
-  if (t.closest('[data-nav-track]')) { location.hash = '#/track'; return; }
-  if (t.closest('[data-nav-admin]')) { location.hash = '#/admin'; return; }
+  if (t.closest('[data-nav-track]'))   { location.hash = '#/track';   return; }
+  if (t.closest('[data-nav-contact]')) { location.hash = '#/contact'; return; }
+  if (t.closest('[data-nav-admin]'))   { location.hash = '#/admin';   return; }
 
   const scroll = t.closest('[data-scroll]');
   if (scroll) {
@@ -32,14 +33,12 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Theme
   if (t.closest('#themeToggle')) {
     const cur = document.documentElement.getAttribute('data-theme') || 'light';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
     return;
   }
 
-  // Wishlist header
   if (t.closest('#wishBtn')) {
     store.filter = 'wish';
     if (location.hash !== '#/' && location.hash !== '') location.hash = '#/';
@@ -47,7 +46,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Search clear
   if (t.closest('#searchClear')) {
     store.search = '';
     $('#searchInput').value = '';
@@ -56,7 +54,6 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Cart actions
   const add = t.closest('[data-add]');
   if (add) { addToCart(add.dataset.add); return; }
 
@@ -73,7 +70,6 @@ document.addEventListener('click', async e => {
   const del = t.closest('[data-del]');
   if (del) return setQty(del.dataset.del, 0);
 
-  // Wishlist toggle
   const wish = t.closest('[data-wish]');
   if (wish) {
     e.stopPropagation();
@@ -85,26 +81,21 @@ document.addEventListener('click', async e => {
     return;
   }
 
-  // Quick view
   const qv = t.closest('[data-quickview]');
   if (qv) { openQuickView(qv.dataset.quickview); return; }
 
-  // Filters / sort
   const filter = t.closest('[data-filter]');
   if (filter) { store.filter = filter.dataset.filter; renderShop(); return; }
 
-  // Cart drawer
   if (t.closest('#cartBtn')) {
     $('#cartDrawer').classList.contains('open') ? closeCart() : openCart();
     return;
   }
   if (t.closest('[data-close-cart]')) return closeCart();
 
-  // Checkout / modal
   if (t.closest('[data-checkout]')) return openCheckout();
   if (t.closest('[data-close-modal]')) return closeModal();
 
-  // Coupon
   if (t.closest('[data-apply-coupon]')) {
     const input = $('#couponInput');
     const res = store.applyCoupon(input?.value);
@@ -116,7 +107,7 @@ document.addEventListener('click', async e => {
     store.clearCoupon(); renderCart(); return;
   }
 
-  // Admin
+  /* --- admin actions --- */
   const tab = t.closest('[data-tab]');
   if (tab) return adminActions.setTab(tab.dataset.tab);
   if (t.closest('[data-logout]')) return adminLogout();
@@ -133,6 +124,20 @@ document.addEventListener('click', async e => {
 
   const quick = t.closest('[data-quick-ship]');
   if (quick) return adminActions.quickShip(quick.dataset.quickShip);
+
+  const delSub = t.closest('[data-del-subscriber]');
+  if (delSub) return adminActions.deleteSubscriber(delSub.dataset.delSubscriber);
+
+  const delMsg = t.closest('[data-del-message]');
+  if (delMsg) return adminActions.deleteMessage(delMsg.dataset.delMessage);
+
+  const markRead = t.closest('[data-message-status]');
+  if (markRead) return adminActions.updateMessageStatus(
+    markRead.dataset.msgId, markRead.dataset.messageStatus
+  );
+
+  const viewMsg = t.closest('[data-view-message]');
+  if (viewMsg) return adminActions.viewMessage(viewMsg.dataset.viewMessage);
 });
 
 /* ---------- input ---------- */
@@ -155,8 +160,7 @@ document.addEventListener('change', e => {
 document.addEventListener('submit', e => {
   if (e.target.matches('[data-newsletter]')) {
     e.preventDefault();
-    toast('Thanks for subscribing!');
-    e.target.reset();
+    handleNewsletter(e);
     return;
   }
   if (e.target.id === 'trackForm') {
@@ -164,7 +168,34 @@ document.addEventListener('submit', e => {
     submitTrack(e);
     return;
   }
+  if (e.target.id === 'contactForm') {
+    e.preventDefault();
+    submitContact(e);
+    return;
+  }
 });
+
+async function handleNewsletter(e) {
+  const form = e.target;
+  const btn = form.querySelector('button[type=submit]');
+  const fd = new FormData(form);
+  const name = String(fd.get('name') || '').trim();
+  const email = String(fd.get('email') || '').trim();
+
+  btn.disabled = true;
+  btn.textContent = 'Subscribing…';
+
+  try {
+    const res = await api.subscribe({ name, email });
+    toast(res.alreadySubscribed ? "You're already on the list!" : 'Thanks for subscribing!');
+    form.reset();
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe';
+  }
+}
 
 /* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
