@@ -1,7 +1,7 @@
 import { store } from './store.js';
 import { api } from './api.js';
 import { CONFIG } from './config.js';
-import { $, money, esc, initials, toast } from './utils.js';
+import { $, money, esc, initials } from './utils.js';
 
 export async function loadProducts() {
   const { products } = await api.products();
@@ -28,7 +28,7 @@ function visibleProducts() {
   let list = [...store.products];
 
   if (store.filter === 'new')  list = list.slice(0, 6);
-  else if (store.filter === 'best') list = [...list].sort((a, b) => (b.stock||0) - (a.stock||0)).slice(0, 6);
+  else if (store.filter === 'best') list = [...list].sort((a, b) => (b.stock || 0) - (a.stock || 0)).slice(0, 6);
   else if (store.filter === 'sale') list = list.filter(p => p.price > 3000).slice(0, 6);
   else if (store.filter === 'wish') list = list.filter(p => store.isWished(p.id));
 
@@ -42,7 +42,7 @@ function visibleProducts() {
 
   if (store.sort === 'price-asc')  list.sort((a, b) => a.price - b.price);
   if (store.sort === 'price-desc') list.sort((a, b) => b.price - a.price);
-  if (store.sort === 'newest')     list.sort((a, b) => (b.created_at||0) - (a.created_at||0));
+  if (store.sort === 'newest')     list.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
 
   return list;
 }
@@ -53,7 +53,7 @@ function renderHero() {
       <div class="hero-copy">
         <div class="eyebrow"><span class="dot"></span> New drop · SS26</div>
         <h1>Everyday Friends,<br>made to <em>last</em>.</h1>
-        <p>Premium Made, small Friends every 2 weeks, and honest pricing.</p>
+        <p>Premium made, small friends every 2 weeks, and honest pricing.</p>
         <div class="hero-cta">
           <button class="btn brand" data-scroll="#shop">Shop the collection →</button>
           <button class="btn outline" data-scroll="#testi">Read reviews</button>
@@ -80,7 +80,7 @@ function renderHero() {
 function renderTrust() {
   return `
     <div class="trust">
-      <div class="t"><div class="ic">🚚</div><div><b>Free shipping</b><span>On orders over $75</span></div></div>
+      <div class="t"><div class="ic">🚚</div><div><b>Free shipping</b><span>On all orders</span></div></div>
       <div class="t"><div class="ic">↩</div><div><b>30-day returns</b><span>No questions asked</span></div></div>
       <div class="t"><div class="ic">🔒</div><div><b>Secure checkout</b><span>256-bit encryption</span></div></div>
       <div class="t"><div class="ic">💬</div><div><b>Real support</b><span>Humans, not bots</span></div></div>
@@ -98,7 +98,10 @@ function renderCatalog(products) {
         <div class="toolbar">
           <div class="filters">
             ${[
-              ['all','All'], ['new','New in'], ['best','Best sellers'], ['sale','On sale'],
+              ['all', 'All'],
+              ['new', 'New in'],
+              ['best', 'Best sellers'],
+              ['sale', 'On sale'],
               ['wish', `Wishlist${store.wishlist.length ? ` (${store.wishlist.length})` : ''}`],
             ].map(([k, l]) =>
               `<button class="filter ${store.filter === k ? 'on' : ''}" data-filter="${k}">${l}</button>`).join('')}
@@ -194,9 +197,9 @@ function renderTestimonials() {
       </div>
       <div class="testi-grid">
         ${[
-          ['“The quality is insane for the price. I\'ve worn my hoodie every single day for a month and it still looks brand new.”','Sarah K.','Verified buyer'],
-          ['“Fast shipping, beautiful packaging, and the fit is perfect. Already ordered two more.”','Marcus T.','Verified buyer'],
-          ['“Finally a brand that actually cares about materials. The cotton is so soft and the colors are gorgeous.”','Priya R.','Verified buyer'],
+          ['“The quality is insane for the price. I\'ve worn my hoodie every single day for a month and it still looks brand new.”', 'Sarah K.', 'Verified buyer'],
+          ['“Fast shipping, beautiful packaging, and the fit is perfect. Already ordered two more.”', 'Marcus T.', 'Verified buyer'],
+          ['“Finally a brand that actually cares about materials. The cotton is so soft and the colors are gorgeous.”', 'Priya R.', 'Verified buyer'],
         ].map(([quote, name, tag]) => `
           <div class="testi">
             <div class="stars">★★★★★</div>
@@ -216,9 +219,13 @@ function renderNewsletter() {
       <h2>Get 10% off your first order.</h2>
       <p>Join the list for early access to drops, restocks, and members-only pricing.</p>
       <form class="news-form" data-newsletter>
-        <input type="email" required placeholder="your@email.com">
+        <input type="text" name="name" placeholder="First name" autocomplete="given-name">
+        <input type="email" name="email" required placeholder="your@email.com" autocomplete="email">
         <button type="submit">Subscribe</button>
       </form>
+      <p class="muted small" style="margin:14px 0 0;color:rgba(255,255,255,.55)">
+        We'll never share your email. Unsubscribe anytime.
+      </p>
     </section>`;
 }
 
