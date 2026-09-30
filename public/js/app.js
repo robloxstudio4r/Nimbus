@@ -15,13 +15,13 @@ function applyTheme(mode) {
   writeLS(CONFIG.STORAGE.theme, mode);
 }
 
-/* ---------- click delegation ---------- */
 document.addEventListener('click', async e => {
   const t = e.target;
 
   if (t.closest('[data-nav-home]') || t.closest('[data-nav-shop]')) {
     location.hash = '#/'; return;
   }
+  if (t.closest('[data-nav-about]'))   { location.hash = '#/about';   return; }
   if (t.closest('[data-nav-track]'))   { location.hash = '#/track';   return; }
   if (t.closest('[data-nav-contact]')) { location.hash = '#/contact'; return; }
   if (t.closest('[data-nav-admin]'))   { location.hash = '#/admin';   return; }
@@ -107,7 +107,7 @@ document.addEventListener('click', async e => {
     store.clearCoupon(); renderCart(); return;
   }
 
-  /* --- admin actions --- */
+  /* ---------- admin ---------- */
   const tab = t.closest('[data-tab]');
   if (tab) return adminActions.setTab(tab.dataset.tab);
   if (t.closest('[data-logout]')) return adminLogout();
@@ -115,6 +115,7 @@ document.addEventListener('click', async e => {
   const order = t.closest('[data-order]');
   if (order) return adminActions.openOrder(order.dataset.order);
   if (t.closest('[data-back-orders]')) return adminActions.backToOrders();
+  if (t.closest('[data-back-messages]')) return adminActions.backToMessages();
 
   const delP = t.closest('[data-del-product]');
   if (delP) return adminActions.deleteProduct(delP.dataset.delProduct);
@@ -131,16 +132,18 @@ document.addEventListener('click', async e => {
   const delMsg = t.closest('[data-del-message]');
   if (delMsg) return adminActions.deleteMessage(delMsg.dataset.delMessage);
 
-  const markRead = t.closest('[data-message-status]');
-  if (markRead) return adminActions.updateMessageStatus(
-    markRead.dataset.msgId, markRead.dataset.messageStatus
+  const markStatus = t.closest('[data-message-status]');
+  if (markStatus) return adminActions.updateMessageStatus(
+    markStatus.dataset.msgId, markStatus.dataset.messageStatus
   );
 
   const viewMsg = t.closest('[data-view-message]');
   if (viewMsg) return adminActions.viewMessage(viewMsg.dataset.viewMessage);
+
+  // About editor — reset to defaults
+  if (t.closest('[data-about-reset]')) return adminActions.resetAboutDraft();
 });
 
-/* ---------- input ---------- */
 document.addEventListener('input', e => {
   if (e.target.id === 'searchInput') {
     store.search = e.target.value.trim();
@@ -156,7 +159,6 @@ document.addEventListener('change', e => {
   }
 });
 
-/* ---------- submit ---------- */
 document.addEventListener('submit', e => {
   if (e.target.matches('[data-newsletter]')) {
     e.preventDefault();
@@ -171,6 +173,11 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'contactForm') {
     e.preventDefault();
     submitContact(e);
+    return;
+  }
+  if (e.target.id === 'aboutForm') {
+    e.preventDefault();
+    adminActions.saveAbout(e);
     return;
   }
 });
@@ -197,7 +204,6 @@ async function handleNewsletter(e) {
   }
 }
 
-/* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeModal(); closeCart(); }
   if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
@@ -206,10 +212,8 @@ document.addEventListener('keydown', e => {
   }
 });
 
-/* ---------- hash router ---------- */
 window.addEventListener('hashchange', route);
 
-/* ---------- boot ---------- */
 (async function boot() {
   const savedTheme = readLS(CONFIG.STORAGE.theme, 'light');
   applyTheme(savedTheme);
