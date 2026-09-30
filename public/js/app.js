@@ -6,6 +6,7 @@ import { loadCart, addToCart, setQty, openCart, closeCart, updateCartBadge, rend
 import { loadProducts, renderShop, openQuickView, closeModal } from './shop.js';
 import { openCheckout } from './checkout.js';
 import { renderAdmin, adminLogout, adminActions } from './admin.js';
+import { renderTrack, submitTrack } from './track.js';
 import { route } from './router.js';
 
 function applyTheme(mode) {
@@ -13,15 +14,17 @@ function applyTheme(mode) {
   writeLS(CONFIG.STORAGE.theme, mode);
 }
 
+/* ---------- click delegation ---------- */
 document.addEventListener('click', async e => {
   const t = e.target;
 
+  // Navigation
   if (t.closest('[data-nav-home]') || t.closest('[data-nav-shop]')) {
     location.hash = '#/'; return;
   }
-  if (t.closest('[data-nav-admin]')) {
-    location.hash = '#/admin'; return;
-  }
+  if (t.closest('[data-nav-track]')) { location.hash = '#/track'; return; }
+  if (t.closest('[data-nav-admin]')) { location.hash = '#/admin'; return; }
+
   const scroll = t.closest('[data-scroll]');
   if (scroll) {
     const el = document.querySelector(scroll.dataset.scroll);
@@ -29,12 +32,14 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  // Theme
   if (t.closest('#themeToggle')) {
     const cur = document.documentElement.getAttribute('data-theme') || 'light';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
     return;
   }
 
+  // Wishlist header
   if (t.closest('#wishBtn')) {
     store.filter = 'wish';
     if (location.hash !== '#/' && location.hash !== '') location.hash = '#/';
@@ -42,6 +47,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  // Search clear
   if (t.closest('#searchClear')) {
     store.search = '';
     $('#searchInput').value = '';
@@ -50,6 +56,7 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  // Cart actions
   const add = t.closest('[data-add]');
   if (add) { addToCart(add.dataset.add); return; }
 
@@ -66,6 +73,7 @@ document.addEventListener('click', async e => {
   const del = t.closest('[data-del]');
   if (del) return setQty(del.dataset.del, 0);
 
+  // Wishlist toggle
   const wish = t.closest('[data-wish]');
   if (wish) {
     e.stopPropagation();
@@ -77,21 +85,26 @@ document.addEventListener('click', async e => {
     return;
   }
 
+  // Quick view
   const qv = t.closest('[data-quickview]');
   if (qv) { openQuickView(qv.dataset.quickview); return; }
 
+  // Filters / sort
   const filter = t.closest('[data-filter]');
   if (filter) { store.filter = filter.dataset.filter; renderShop(); return; }
 
+  // Cart drawer
   if (t.closest('#cartBtn')) {
     $('#cartDrawer').classList.contains('open') ? closeCart() : openCart();
     return;
   }
   if (t.closest('[data-close-cart]')) return closeCart();
 
+  // Checkout / modal
   if (t.closest('[data-checkout]')) return openCheckout();
   if (t.closest('[data-close-modal]')) return closeModal();
 
+  // Coupon
   if (t.closest('[data-apply-coupon]')) {
     const input = $('#couponInput');
     const res = store.applyCoupon(input?.value);
@@ -103,6 +116,7 @@ document.addEventListener('click', async e => {
     store.clearCoupon(); renderCart(); return;
   }
 
+  // Admin
   const tab = t.closest('[data-tab]');
   if (tab) return adminActions.setTab(tab.dataset.tab);
   if (t.closest('[data-logout]')) return adminLogout();
@@ -113,12 +127,15 @@ document.addEventListener('click', async e => {
 
   const delP = t.closest('[data-del-product]');
   if (delP) return adminActions.deleteProduct(delP.dataset.delProduct);
-  const ful = t.closest('[data-fulfill]');
-  if (ful) return adminActions.fulfill(ful.dataset.fulfill);
+
   const ref = t.closest('[data-refund]');
   if (ref) return adminActions.refund(ref.dataset.refund);
+
+  const quick = t.closest('[data-quick-ship]');
+  if (quick) return adminActions.quickShip(quick.dataset.quickShip);
 });
 
+/* ---------- input ---------- */
 document.addEventListener('input', e => {
   if (e.target.id === 'searchInput') {
     store.search = e.target.value.trim();
@@ -134,24 +151,34 @@ document.addEventListener('change', e => {
   }
 });
 
+/* ---------- submit ---------- */
 document.addEventListener('submit', e => {
   if (e.target.matches('[data-newsletter]')) {
     e.preventDefault();
     toast('Thanks for subscribing!');
     e.target.reset();
+    return;
+  }
+  if (e.target.id === 'trackForm') {
+    e.preventDefault();
+    submitTrack(e);
+    return;
   }
 });
 
+/* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeModal(); closeCart(); }
-  if (e.key === '/' && e.target.tagName !== 'INPUT') {
+  if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
     e.preventDefault();
     $('#searchInput')?.focus();
   }
 });
 
+/* ---------- hash router ---------- */
 window.addEventListener('hashchange', route);
 
+/* ---------- boot ---------- */
 (async function boot() {
   const savedTheme = readLS(CONFIG.STORAGE.theme, 'light');
   applyTheme(savedTheme);
